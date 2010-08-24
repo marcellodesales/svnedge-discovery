@@ -1,5 +1,6 @@
 package com.collabnet.jmdns.browser;
 
+import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.BorderFactory;
@@ -15,6 +16,7 @@ public class ServiceDescriptorRenderer extends DefaultListCellRenderer {
 	private static final long serialVersionUID = 1048671867146583463L;
 
 	public ServiceDescriptorRenderer() {
+		super();
 	}
 
 	public Component getListCellRendererComponent(JList list,
@@ -30,6 +32,7 @@ public class ServiceDescriptorRenderer extends DefaultListCellRenderer {
 					hasFocus);
 		if (value instanceof ServiceDescriptor) {
 			label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
+	        label.setForeground(Color.BLUE);
 			label.setIcon(((ServiceDescriptor) value).getImage()); 
 			label.setIconTextGap(8);
 		}
