@@ -25,22 +25,23 @@ import javax.swing.JList;
 
 public class ServiceListMouseMotionListener extends MouseMotionAdapter {
 
-	/**
-	 * Use <code>java.awt.Cursor.HAND_CURSOR</code> if the mouse is over a discovered server
-	 */
-	@Override
-	public void mouseMoved(MouseEvent e) {
-		Object source = e.getSource();
-		if (source instanceof JList) {
-			Cursor cursor = Cursor.getDefaultCursor();
-			JList jList = (JList) source;
-			int index = jList.locationToIndex(e.getPoint());
-			if (index >= 0) {
-				if (jList.getCellBounds(index, index).contains(e.getPoint())) {
-					cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-				}
-			}
+    /**
+     * Use <code>java.awt.Cursor.HAND_CURSOR</code> if the mouse is over a
+     * discovered server
+     */
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        Object source = e.getSource();
+        if (source instanceof JList) {
+            Cursor cursor = Cursor.getDefaultCursor();
+            JList jList = (JList) source;
+            int index = jList.locationToIndex(e.getPoint());
+            if (index >= 0) {
+                if (jList.getCellBounds(index, index).contains(e.getPoint())) {
+                    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+                }
+            }
             jList.setCursor(cursor);
-		}
-	}
+        }
+    }
 }
