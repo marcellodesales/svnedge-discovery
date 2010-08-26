@@ -133,28 +133,7 @@ public class CollabNetSvnBrowser extends JFrame implements ServiceListener, List
 		serviceList.setCellRenderer(new ServiceDescriptorRenderer());
 		serviceList.addListSelectionListener(this);
 		serviceList.addMouseListener(new ServiceActionMouseListener());
-		serviceList.addMouseMotionListener(new MouseMotionAdapter() {
-
-			/**
-			 * Use <code>java.awt.Cursor.HAND_CURSOR</code> if the mouse is over a discovered server
-			 */
-			@Override
-			public void mouseMoved(MouseEvent e) {
-				Object source = e.getSource();
-				if (source instanceof JList) {
-					Cursor cursor = Cursor.getDefaultCursor();
-					JList jList = (JList) source;
-					int index = jList.locationToIndex(e.getPoint());
-					if (index >= 0) {
-						if (jList.getCellBounds(index, index).contains(e.getPoint())) {
-							cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-						}
-					}
-		            jList.setCursor(cursor);
-				}
-			}
-		});
-
+		serviceList.addMouseMotionListener(new ServiceListMouseMotionListener());
 		JPanel servicePanel = new JPanel();
 		servicePanel.setBorder(border);
 		servicePanel.setLayout(new BorderLayout());
