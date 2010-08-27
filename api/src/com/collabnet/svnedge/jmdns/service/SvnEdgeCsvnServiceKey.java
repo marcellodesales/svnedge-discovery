@@ -26,9 +26,7 @@ package com.collabnet.svnedge.jmdns.service;
 public enum SvnEdgeCsvnServiceKey implements SvnEdgeServiceKey {
 
     CONTEXT_PATH("path"),
-    TEAMFORGE_PATH("tfpath"),
-    ADMIN_NAME("adminName"),
-    ADMIN_EMAIL("adminEmail");
+    TEAMFORGE_PATH("tfpath");
 
     /**
      * The key that is transported in the network.
