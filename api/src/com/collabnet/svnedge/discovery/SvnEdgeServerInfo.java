@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.collabnet.svnedge.jmdns;
+package com.collabnet.svnedge.discovery;
 
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -25,8 +25,8 @@ import java.util.Map;
 
 import javax.jmdns.ServiceInfo;
 
-import com.collabnet.svnedge.jmdns.service.SvnEdgeServiceKey;
-import com.collabnet.svnedge.jmdns.service.SvnEdgeServiceType;
+import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceKey;
+import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceType;
 
 /**
  * This class describes an SVN service provided by an instance of CollabNet

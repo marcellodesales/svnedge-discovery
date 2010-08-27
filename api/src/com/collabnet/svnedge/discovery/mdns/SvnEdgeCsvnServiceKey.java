@@ -15,27 +15,30 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.collabnet.svnedge.jmdns;
+package com.collabnet.svnedge.discovery.mdns;
 
 /**
- * The SvnEdge Server Observer is a type interested when a server has started
- * or stopped. That is, when the server starts, it is resolved by the network.
- * When the server is stopped, it will not be available in the network.
+ * The keys for the CSVN service. See SvnEdgeServiceType.CSVN.
  * 
  * @author Marcello de Sales (mdesales@collab.net)
- *
+ * 
  */
-public interface SvnEdgeServerObserver {
+public enum SvnEdgeCsvnServiceKey implements SvnEdgeServiceKey {
+
+    CONTEXT_PATH("path"),
+    TEAMFORGE_PATH("tfpath");
 
     /**
-     * This event when an SvnEdge server is identified to be running.
-     * @param serverInfo is the server information.
+     * The key that is transported in the network.
      */
-    public void csvnServerIsRunning(SvnEdgeServerInfo serverInfo);
-    /**
-     * The event when an SvnEdge server stops and can't be contacted in the
-     * network.
-     * @param serverInfo
-     */
-    public void csvnServerStopped(SvnEdgeServerInfo serverInfo);
+    private String key;
+
+    private SvnEdgeCsvnServiceKey(String keyValue) {
+        this.key = keyValue;
+    }
+
+    @Override
+    public String toString() {
+        return this.key;
+    }
 }

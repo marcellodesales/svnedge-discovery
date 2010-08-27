@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.collabnet.svnedge.jmdns;
+package com.collabnet.svnedge.discovery;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,7 +31,7 @@ import javax.jmdns.ServiceEvent;
 import javax.jmdns.ServiceInfo;
 import javax.jmdns.ServiceListener;
 
-import com.collabnet.svnedge.jmdns.service.SvnEdgeServiceType;
+import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceType;
 
 /**
  * The SvnEdge Bounjour Client is a general client to be used by any clients.
@@ -51,7 +51,7 @@ public class SvnEdgeBonjourClient implements ServiceListener {
      * The list of service listeners that are interested when a new service has
      * been added to the mDNS proxy.
      */
-    private Queue<SvnEdgeServerObserver> observers;
+    private Queue<SvnEdgeServersListener> observers;
 
     /**
      * Creates a new instance of the SvnEdge bonjour client.
@@ -62,7 +62,7 @@ public class SvnEdgeBonjourClient implements ServiceListener {
     private SvnEdgeBonjourClient(SvnEdgeServiceType type) throws IOException {
         this.jmdns = JmDNS.create();
         this.jmdns.addServiceListener(type.toString(), this);
-        this.observers = new ConcurrentLinkedQueue<SvnEdgeServerObserver>();
+        this.observers = new ConcurrentLinkedQueue<SvnEdgeServersListener>();
     }
 
     /**
@@ -79,14 +79,14 @@ public class SvnEdgeBonjourClient implements ServiceListener {
     }
 
     /**
-     * Adds a new observer to the service.
+     * Adds a new observer/listener to the service.
      * 
-     * @param newObserver
+     * @param newLis
      *            is new observer interested in the events of any Subversion
      *            Edge server in the local network.
      */
-    public synchronized void addObserver(SvnEdgeServerObserver newObserver) {
-        this.observers.add(newObserver);
+    public synchronized void addServersListener(SvnEdgeServersListener newLis) {
+        this.observers.add(newLis);
     }
 
     /**
@@ -130,7 +130,7 @@ public class SvnEdgeBonjourClient implements ServiceListener {
     public void serviceRemoved(ServiceEvent removedEvent) {
         SvnEdgeServerInfo serverInfo = SvnEdgeServerInfo.makeNew(removedEvent
                 .getInfo());
-        for (SvnEdgeServerObserver observer : this.observers) {
+        for (SvnEdgeServersListener observer : this.observers) {
             observer.csvnServerStopped(serverInfo);
         }
         // debug(removedEvent.getInfo());
@@ -141,7 +141,7 @@ public class SvnEdgeBonjourClient implements ServiceListener {
     public void serviceResolved(ServiceEvent resolvedEvent) {
         SvnEdgeServerInfo serverInfo = SvnEdgeServerInfo.makeNew(resolvedEvent
                 .getInfo());
-        for (SvnEdgeServerObserver observer : this.observers) {
+        for (SvnEdgeServersListener observer : this.observers) {
             observer.csvnServerIsRunning(serverInfo);
         }
         // debug(resolvedEvent.getInfo());
@@ -204,7 +204,7 @@ public class SvnEdgeBonjourClient implements ServiceListener {
                 .makeInstance(selectedType);
 
         // adding an observer for the selected service type.
-        client.addObserver(new SvnEdgeServerObserver() {
+        client.addServersListener(new SvnEdgeServersListener() {
             @Override
             public void csvnServerStopped(SvnEdgeServerInfo serverInfo) {
                 System.out.println("#### Server stopped ####");

@@ -15,30 +15,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.collabnet.svnedge.jmdns.service;
+package com.collabnet.svnedge.discovery.mdns;
 
 /**
- * The keys for the CSVN service. See SvnEdgeServiceType.CSVN.
+ * This is a marker Interface for the service type keys used in the Bonjour
+ * protocol.
  * 
- * @author Marcello de Sales (mdesales@collab.net)
+ * @author Marcello de Sales (mdesales@collab.net).
  * 
  */
-public enum SvnEdgeCsvnServiceKey implements SvnEdgeServiceKey {
+public interface SvnEdgeServiceKey {
 
-    CONTEXT_PATH("path"),
-    TEAMFORGE_PATH("tfpath");
-
-    /**
-     * The key that is transported in the network.
-     */
-    private String key;
-
-    private SvnEdgeCsvnServiceKey(String keyValue) {
-        this.key = keyValue;
-    }
-
-    @Override
-    public String toString() {
-        return this.key;
-    }
 }

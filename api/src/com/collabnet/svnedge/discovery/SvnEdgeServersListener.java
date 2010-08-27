@@ -15,15 +15,27 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.collabnet.svnedge.jmdns.service;
+package com.collabnet.svnedge.discovery;
 
 /**
- * This is a marker Interface for the service type keys used in the Bonjour
- * protocol.
+ * The SvnEdge Server Observer is a type interested when a server has started
+ * or stopped. That is, when the server starts, it is resolved by the network.
+ * When the server is stopped, it will not be available in the network.
  * 
- * @author Marcello de Sales (mdesales@collab.net).
- * 
+ * @author Marcello de Sales (mdesales@collab.net)
+ *
  */
-public interface SvnEdgeServiceKey {
+public interface SvnEdgeServersListener {
 
+    /**
+     * This event when an SvnEdge server is identified to be running.
+     * @param serverInfo is the server information.
+     */
+    public void csvnServerIsRunning(SvnEdgeServerInfo serverInfo);
+    /**
+     * The event when an SvnEdge server stops and can't be contacted in the
+     * network.
+     * @param serverInfo
+     */
+    public void csvnServerStopped(SvnEdgeServerInfo serverInfo);
 }
