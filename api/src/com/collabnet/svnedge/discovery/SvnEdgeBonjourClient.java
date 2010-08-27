@@ -46,7 +46,7 @@ public class SvnEdgeBonjourClient implements ServiceListener {
     /**
      * The jMDNS client instance
      */
-    private JmDNS jmdns;
+    private static JmDNS jmdns;
     /**
      * The list of service listeners that are interested when a new service has
      * been added to the mDNS proxy.
@@ -60,8 +60,8 @@ public class SvnEdgeBonjourClient implements ServiceListener {
      *             if any problem in the network occurs.
      */
     private SvnEdgeBonjourClient(SvnEdgeServiceType type) throws IOException {
-        this.jmdns = JmDNS.create();
-        this.jmdns.addServiceListener(type.toString(), this);
+        jmdns = JmDNS.create();
+        jmdns.addServiceListener(type.toString(), this);
         this.observers = new ConcurrentLinkedQueue<SvnEdgeServersListener>();
     }
 
@@ -76,6 +76,15 @@ public class SvnEdgeBonjourClient implements ServiceListener {
             throws IOException {
 
         return new SvnEdgeBonjourClient(type);
+    }
+
+    /**
+     * The stop method forces the client to completely stop the jmDNS service.
+     */
+    public void stop() {
+        jmdns.unregisterAllServices();
+        jmdns.close();
+        jmdns = null;
     }
 
     /**
