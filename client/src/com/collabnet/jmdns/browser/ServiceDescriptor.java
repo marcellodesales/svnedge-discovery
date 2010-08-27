@@ -18,6 +18,7 @@
 package com.collabnet.jmdns.browser;
 
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 import java.net.URLEncoder;
 
 import javax.jmdns.ServiceInfo;
@@ -29,6 +30,7 @@ public class ServiceDescriptor implements Comparable<Object> {
     private String serviceUrl;
     private ImageIcon img;
     private String teamForgePath;
+    private InetAddress addr;
 
     ServiceDescriptor(String serviceName, String url) {
         this.serviceName = serviceName;
@@ -47,6 +49,7 @@ public class ServiceDescriptor implements Comparable<Object> {
             }
         }
         setServiceUrl(svcUrl);
+        addr = info.getAddress();
     }
 
     ServiceDescriptor(ServiceInfo info, boolean isTeamForge) {
@@ -95,6 +98,30 @@ public class ServiceDescriptor implements Comparable<Object> {
         return url;
     }
 
+    /**
+     * Gets the Subversion Edge URL with canonical host name
+     * 
+     * @return String representation of Subversion Edge
+     */
+    public String getNiceUrl() {
+        String url = getServiceUrl();
+        if (addr != null && url != null) {
+            String hostAddress = addr.getHostAddress();
+            if (url.contains(hostAddress)) {
+                try {
+                    String cHostName = addr.getCanonicalHostName();
+                    if (cHostName != null && cHostName.length() > 0) {
+                        url = url.replaceFirst(hostAddress, cHostName);
+                    }
+                } catch (Exception exc) {
+                    // continue to use original URL (with IP address)
+                    System.err.println(exc);
+                }
+            }
+        }
+        return url;
+    }
+
     @Override
     public boolean equals(Object arg0) {
         if (arg0 instanceof ServiceDescriptor) {
@@ -115,7 +142,8 @@ public class ServiceDescriptor implements Comparable<Object> {
 
     @Override
     public String toString() {
-        return getServiceUrl() == null ? "?" : getServiceUrl();
+        String url = getNiceUrl();
+        return url == null ? "?" : url;
     }
 
     public int compareTo(Object arg0) {
