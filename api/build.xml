@@ -49,7 +49,7 @@
     </target>
 
     <target name="run" depends="jar">
-        <java fork="true" classname="com.collabnet.svnedge.jmdns.SvnEdgeBonjourClient">
+        <java fork="true" classname="com.collabnet.svnedge.discovery.SvnEdgeBonjourClient">
             <classpath>
                 <path location="dist/${JAR_NAME}" />
                 <path location="lib/jmdns.jar" />
