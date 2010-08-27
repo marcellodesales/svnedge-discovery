@@ -1,0 +1,60 @@
+<project name="Subversion Edge Discovery API" default="run" basedir=".">
+
+   <tstamp>
+      <format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss z" />
+   </tstamp>
+
+   <property name="version.num" value="1.0.0"/>
+   <property name="JAR_NAME" value="svnedge-discovery-api-${version.num}.jar" />
+
+    <path id="api.classpath">
+      <pathelement location="target/classes"/>
+        <fileset dir="lib">
+          <include name="jmdns.jar"/>
+        </fileset>
+    </path>
+
+    <target name="clean">
+        <delete dir="target"/>
+    </target>
+
+    <target name="compile" depends="clean">
+        <mkdir dir="target"/>
+        <mkdir dir="target/classes"/>
+        <javac srcdir="src" destdir="target/classes">
+            <classpath><path refid="api.classpath" /></classpath>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="dist"/>
+        <jar basedir="target/classes"
+             jarfile="dist/svnedge-discovery-api-${version.num}.jar" 
+             compress="true" includes="**/*">
+            <manifest>
+                <attribute name="Manifest-Version" value="1.0"/>
+                <attribute name="Created-By" value="CollabNet, Inc."/>
+                <attribute name="Implementation-Version" value="${version.num}"/>
+                <attribute name="Built-Date" value="${TODAY}"/>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Build-Jdk" value="${java.runtime.version}"/>
+            </manifest>
+        </jar>
+        <antcall target="clean" />
+    </target>
+
+    <target name="update-distro" depends="jar">
+        <copy file="dist/${JAR_NAME}" todir="${basedir}/../../console/lib/"/>
+        <copy file="dist/${JAR_NAME}" todir="${basedir}/../client/lib/"/>
+    </target>
+
+    <target name="run" depends="jar">
+        <java fork="true" classname="com.collabnet.svnedge.jmdns.SvnEdgeBonjourClient">
+            <classpath>
+                <path location="dist/${JAR_NAME}" />
+                <path location="lib/jmdns.jar" />
+            </classpath>
+        </java>
+    </target>
+
+</project>
