@@ -27,7 +27,13 @@ package com.collabnet.svnedge.discovery.mdns;
  */
 public enum SvnEdgeServiceType {
 
+    /**
+     * The service type _csvn._tcp.local.
+     */
     CSVN("_csvn._tcp.local."),
+    /**
+     * The service type _http._tcp.local.
+     */
     HTTP("_http._tcp.local.");
 
     /**

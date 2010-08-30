@@ -21,7 +21,7 @@
     <target name="compile" depends="clean">
         <mkdir dir="target"/>
         <mkdir dir="target/classes"/>
-        <javac srcdir="src" destdir="target/classes">
+        <javac srcdir="src" destdir="target/classes" debug="on">
             <classpath><path refid="api.classpath" /></classpath>
         </javac>
     </target>

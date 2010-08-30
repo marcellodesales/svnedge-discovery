@@ -20,6 +20,9 @@ package com.collabnet.svnedge.discovery;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +49,7 @@ public class SvnEdgeBonjourClient implements ServiceListener {
     /**
      * The jMDNS client instance
      */
-    private static JmDNS jmdns;
+    private JmDNS jmdns;
     /**
      * The list of service listeners that are interested when a new service has
      * been added to the mDNS proxy.
@@ -54,28 +57,55 @@ public class SvnEdgeBonjourClient implements ServiceListener {
     private Queue<SvnEdgeServersListener> observers;
 
     /**
-     * Creates a new instance of the SvnEdge bonjour client.
-     * 
-     * @throws IOException
-     *             if any problem in the network occurs.
+     * Constructs a new instance with the given ipAddress, hostname and type.
+     * @param address is the ip address to be assigned to the jmDNS service.
+     * @param hostname is the hostname to identify the service.
+     * @param type is the type of the service to probe.
+     * @throws IOException if there is no Internet connectivity.
      */
-    private SvnEdgeBonjourClient(SvnEdgeServiceType type) throws IOException {
-        jmdns = JmDNS.create();
+    private SvnEdgeBonjourClient(InetAddress address, String hostname,
+            SvnEdgeServiceType type)  throws IOException {
+        if (address != null) {
+            if (hostname != null && !hostname.equals("")) {
+                jmdns = JmDNS.create(address, hostname);
+            } else {
+                jmdns = JmDNS.create(address);
+            }
+        } else {
+            jmdns = JmDNS.create();
+        }
         jmdns.addServiceListener(type.toString(), this);
         this.observers = new ConcurrentLinkedQueue<SvnEdgeServersListener>();
     }
 
     /**
-     * @return a new instance of the SvnEdgeBonjourClient for the regular type
-     *         of mDNS client for the SvnEdge service.
-     * 
-     * @throws IOException
-     *             if any problem in the network happens.
+     * Creates a new client using the given ip address that will reply to the
+     * given type.
+     * @param ipAddress is the ip address to publish the service.
+     * @param type is the service type. See getServiceTypes().
+     * @return an instance of the SvnEdgeBonjourClient.
+     * @throws IOException if any problem trying to start the service occurs.
      */
-    public static SvnEdgeBonjourClient makeInstance(SvnEdgeServiceType type)
-            throws IOException {
+    public static SvnEdgeBonjourClient makeInstance(InetAddress ipAddress,
+          SvnEdgeServiceType type) throws IOException {
 
-        return new SvnEdgeBonjourClient(type);
+        return new SvnEdgeBonjourClient(ipAddress, null, type);
+    }
+
+    /**
+     * Creates a new client using the given ip address that will reply to the
+     * given type.
+     * @param ipAddress is the ip address to publish the service.
+     * @param hostname is hostname chosen by the client, mostly used for 
+     * debugging.
+     * @param type is the service type. See getServiceTypes().
+     * @return an instance of the SvnEdgeBonjourClient.
+     * @throws IOException if any problem trying to start the service occurs.
+     */
+    public static SvnEdgeBonjourClient makeInstance(InetAddress ipAddress,
+          String hostname, SvnEdgeServiceType type) throws IOException {
+
+        return new SvnEdgeBonjourClient(ipAddress, hostname, type);
     }
 
     /**
@@ -167,7 +197,48 @@ public class SvnEdgeBonjourClient implements ServiceListener {
 
     public static void main(String[] args) throws IOException {
         System.out.println("%%%%%%%%% SvnEdge Bonjour Client %%%%%%%%%%%%%%");
-        System.out.println("%% Available Service Types:");
+        Enumeration<NetworkInterface> infs = NetworkInterface.getNetworkInterfaces();
+        Map<Integer, InetAddress> ipAddresses = new HashMap<Integer, InetAddress>();
+        int count = 0;
+        while(infs.hasMoreElements()) {
+            NetworkInterface inf = infs.nextElement();
+            if (!inf.isLoopback()) {
+                Enumeration<InetAddress> availableIps = inf.getInetAddresses();
+                while (availableIps.hasMoreElements()) {
+                    InetAddress ip = availableIps.nextElement();
+                    if (ip instanceof Inet4Address) {
+                        ipAddresses.put(++count, ip);
+                    }
+                }
+            }
+        }
+        InetAddress selectedIp = null;
+        if (ipAddresses.size() > 0) {
+            for (Integer index : ipAddresses.keySet()) {
+                if (ipAddresses.get(index) instanceof Inet4Address) {
+                    System.out.println("# " + (index) + ") " + 
+                        ipAddresses.get(index).getHostAddress());
+                }
+            }
+            System.out.println("# A) ALL ");
+            System.out.print("Which IP address you wanna use? ");
+            InputStreamReader converter = new InputStreamReader(System.in);
+            BufferedReader input = new BufferedReader(converter);
+            String selected = input.readLine();
+            if (selected.equalsIgnoreCase("q")) {
+                System.out.println("Thanks for using the SvnEdge API Client");
+                System.exit(0);
+            } else {
+                if (selected.equalsIgnoreCase("a")) {
+                    selectedIp = null;
+                } else {
+                    selectedIp = ipAddresses.get(Integer.valueOf(selected));
+                }
+            }
+        }
+
+        System.out.println();
+        System.out.println("%% Available SvnEdge Service Types:");
         int i = 0;
 
         // getServiceTypes() is just a proxy to SvnEdgeServiceType.values()
@@ -210,7 +281,7 @@ public class SvnEdgeBonjourClient implements ServiceListener {
 
         // creating the client with the selected service type.
         SvnEdgeBonjourClient client = SvnEdgeBonjourClient
-                .makeInstance(selectedType);
+                .makeInstance(selectedIp, selectedType);
 
         // adding an observer for the selected service type.
         client.addServersListener(new SvnEdgeServersListener() {
@@ -231,6 +302,8 @@ public class SvnEdgeBonjourClient implements ServiceListener {
 
         // just wait for the packets
         while (true) {
+            System.out.println();
+            System.out.println("###> Observing from IP addresses ");
             System.out.println("###> Waiting for packets...");
             try {
                 client.waitForPacket();
