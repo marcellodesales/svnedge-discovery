@@ -23,8 +23,10 @@ import java.io.InputStreamReader;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -160,16 +162,22 @@ public final class SvnEdgeBonjourRegister {
         Map<Integer, InetAddress> ipAddresses = new HashMap<Integer, InetAddress>();
         int count = 0;
         while(infs.hasMoreElements()) {
-            NetworkInterface inf = infs.nextElement();
-            if (!inf.isLoopback()) {
-                Enumeration<InetAddress> availableIps = inf.getInetAddresses();
-                while (availableIps.hasMoreElements()) {
-                    InetAddress ip = availableIps.nextElement();
-                    if (ip instanceof Inet4Address) {
-                        ipAddresses.put(++count, ip);
-                    }
-                }
-            }
+           	NetworkInterface inf = infs.nextElement();
+        	boolean isLoopback = false;
+        	List<InetAddress> validAddresses = new ArrayList<InetAddress>();
+        	Enumeration<InetAddress> availableIps = inf.getInetAddresses();
+        	while (availableIps.hasMoreElements()) {
+        		InetAddress ip = availableIps.nextElement();
+        		isLoopback |= ip.isLoopbackAddress();
+        		if (ip instanceof Inet4Address) {
+        			validAddresses.add(ip);
+        		}
+        	}
+        	if (!isLoopback && !validAddresses.isEmpty()) {
+        		for (InetAddress ip : validAddresses) {
+        			ipAddresses.put(++count, ip);
+        		}
+        	}
         }
         InetAddress selectedIp = null;
         if (ipAddresses.size() > 0) {
@@ -199,4 +207,5 @@ public final class SvnEdgeBonjourRegister {
         SvnEdgeBonjourRegister r = SvnEdgeBonjourRegister.getInstance(selectedIp);
         r.registerService(8080, SvnEdgeServiceType.CSVN, props);
     }
+    
 }

@@ -184,7 +184,6 @@ public final class SvnEdgeServerInfo implements Comparable<SvnEdgeServerInfo> {
         return this.keyValues.get(key);
     }
 
-    @Override
     public int compareTo(SvnEdgeServerInfo other) {
         return this.getUrl().toString().compareTo(other.getUrl().toString());
     }

@@ -23,8 +23,10 @@ import java.io.InputStreamReader;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -170,13 +172,11 @@ public class SvnEdgeBonjourClient implements ServiceListener {
         }
     }
 
-    @Override
     public void serviceAdded(ServiceEvent addedEvent) {
         // when any bonjour client is added to the jmDNS client. Do nothing.
         this.notifyPacketArrival();
     }
 
-    @Override
     public void serviceRemoved(ServiceEvent removedEvent) {
         SvnEdgeServerInfo serverInfo = SvnEdgeServerInfo.makeNew(removedEvent
                 .getInfo());
@@ -187,7 +187,6 @@ public class SvnEdgeBonjourClient implements ServiceListener {
         this.notifyPacketArrival();
     }
 
-    @Override
     public void serviceResolved(ServiceEvent resolvedEvent) {
         SvnEdgeServerInfo serverInfo = SvnEdgeServerInfo.makeNew(resolvedEvent
                 .getInfo());
@@ -212,16 +211,22 @@ public class SvnEdgeBonjourClient implements ServiceListener {
         Map<Integer, InetAddress> ipAddresses = new HashMap<Integer, InetAddress>();
         int count = 0;
         while(infs.hasMoreElements()) {
-            NetworkInterface inf = infs.nextElement();
-            if (!inf.isLoopback()) {
-                Enumeration<InetAddress> availableIps = inf.getInetAddresses();
-                while (availableIps.hasMoreElements()) {
-                    InetAddress ip = availableIps.nextElement();
-                    if (ip instanceof Inet4Address) {
-                        ipAddresses.put(++count, ip);
-                    }
-                }
-            }
+        	NetworkInterface inf = infs.nextElement();
+        	boolean isLoopback = false;
+        	List<InetAddress> validAddresses = new ArrayList<InetAddress>();
+        	Enumeration<InetAddress> availableIps = inf.getInetAddresses();
+        	while (availableIps.hasMoreElements()) {
+        		InetAddress ip = availableIps.nextElement();
+        		isLoopback |= ip.isLoopbackAddress();
+        		if (ip instanceof Inet4Address) {
+        			validAddresses.add(ip);
+        		}
+        	}
+        	if (!isLoopback && !validAddresses.isEmpty()) {
+        		for (InetAddress ip : validAddresses) {
+        			ipAddresses.put(++count, ip);
+        		}
+        	}
         }
         InetAddress selectedIp = null;
         if (ipAddresses.size() > 0) {
@@ -296,14 +301,12 @@ public class SvnEdgeBonjourClient implements ServiceListener {
 
         // adding an observer for the selected service type.
         client.addServersListener(new SvnEdgeServersListener() {
-            @Override
             public void csvnServerStopped(SvnEdgeServerInfo serverInfo) {
                 System.out.println("#### Server stopped ####");
                 System.out.println(serverInfo);
                 System.out.println();
             }
 
-            @Override
             public void csvnServerIsRunning(SvnEdgeServerInfo serverInfo) {
                 System.out.println("#### Found Server running ####");
                 System.out.println(serverInfo);
