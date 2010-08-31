@@ -40,6 +40,7 @@ import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import com.collabnet.jmdns.util.ResourceLoader;
 import com.collabnet.svnedge.discovery.SvnEdgeBonjourClient;
 import com.collabnet.svnedge.discovery.SvnEdgeServerInfo;
 import com.collabnet.svnedge.discovery.SvnEdgeServersListener;
@@ -65,8 +66,8 @@ public class CollabNetSvnBrowserApplet extends JApplet implements
      * @throws IOException
      */
     public CollabNetSvnBrowserApplet() throws IOException {
-        this.csvnServersClient =
-                SvnEdgeBonjourClient.makeInstance(SvnEdgeServiceType.CSVN);
+        this.csvnServersClient = SvnEdgeBonjourClient
+                .makeInstance(SvnEdgeServiceType.CSVN);
     }
 
     public void init() {
@@ -101,23 +102,20 @@ public class CollabNetSvnBrowserApplet extends JApplet implements
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 1 &&
-                    e.getButton() == MouseEvent.BUTTON1) {
+                if (e.getClickCount() == 1
+                        && e.getButton() == MouseEvent.BUTTON1) {
                     Object source = e.getSource();
                     if (source instanceof JList) {
                         JList jList = (JList) source;
                         int index = jList.locationToIndex(e.getPoint());
                         if (index >= 0) {
                             ListModel model = jList.getModel();
-                            ServiceDescriptor sd =
-                                    (ServiceDescriptor) model
-                                            .getElementAt(index);
+                            ServiceDescriptor sd = (ServiceDescriptor) model
+                                    .getElementAt(index);
                             try {
-                                URL url =
-                                        new URL(
-                                                isTeamForge ? sd
-                                                        .getTeamForgeRegistrationUrl(hostUrl)
-                                                    : sd.toString());
+                                URL url = new URL(isTeamForge ? sd
+                                        .getTeamForgeRegistrationUrl(hostUrl)
+                                        : sd.toString());
                                 getAppletContext().showDocument(url, "_blank");
                             } catch (IOException exc) {
                                 exc.printStackTrace(); // ignore
@@ -148,8 +146,7 @@ public class CollabNetSvnBrowserApplet extends JApplet implements
         footerPanel.add("West", currentUrlLbl);
         JLabel currentUrl = new JLabel(hostUrl);
         if ((isTeamForge)) {
-            currentUrl.setIcon(createImageIcon("/resources/tf16.gif",
-                    "TeamForge"));
+            currentUrl.setIcon(ResourceLoader.Instance.getTeamForgeIcon());
             currentUrl.setIconTextGap(8);
         }
 
@@ -164,7 +161,6 @@ public class CollabNetSvnBrowserApplet extends JApplet implements
         this.setVisible(true);
     }
 
-    @Override
     public void csvnServerStopped(SvnEdgeServerInfo serverInfo) {
         final String name = serverInfo.getServiceName();
         final ServiceDescriptor tempSd = ServiceDescriptor.makeNew(serverInfo);
@@ -176,19 +172,16 @@ public class CollabNetSvnBrowserApplet extends JApplet implements
         });
     }
 
-    @Override
     public void csvnServerIsRunning(SvnEdgeServerInfo serverInfo) {
         String aName = serverInfo.getServiceName();
-        System.out.println("Service Resolve: " + aName + " -> " +
-                           serverInfo.getUrl());
-        ServiceDescriptor tempSd =
-                ServiceDescriptor.makeNew(serverInfo, isTeamForge);
+        System.out.println("Service Resolve: " + aName + " -> "
+                + serverInfo.getUrl());
+        ServiceDescriptor tempSd = ServiceDescriptor.makeNew(serverInfo);
         int index = services.indexOf(tempSd);
         boolean insertNew = index < 0;
         if (insertNew) {
-            final ServiceDescriptor sd =
-                    ServiceDescriptor.makeNew(getDefaultServiceIcon(),
-                            serverInfo, isTeamForge);
+            final ServiceDescriptor sd = ServiceDescriptor.makeNew(
+                    ResourceLoader.Instance.getCollabNetIcon(), serverInfo);
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                     insertSorted(services, sd);
@@ -268,12 +261,6 @@ public class CollabNetSvnBrowserApplet extends JApplet implements
 
         String path = url.getPath();
         return path != null && path.startsWith("/sf/");
-    }
-
-    private ImageIcon getDefaultServiceIcon() {
-        return defaultServiceIcon == null ? (defaultServiceIcon =
-                createImageIcon("/resources/collabnet16.gif", "CollabNet"))
-            : defaultServiceIcon;
     }
 
     /**

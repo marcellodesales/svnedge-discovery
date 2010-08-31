@@ -41,6 +41,7 @@ import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import com.collabnet.jmdns.util.ResourceLoader;
 import com.collabnet.svnedge.discovery.SvnEdgeBonjourClient;
 import com.collabnet.svnedge.discovery.SvnEdgeServerInfo;
 import com.collabnet.svnedge.discovery.SvnEdgeServersListener;
@@ -70,8 +71,8 @@ public class CollabNetSvnBrowser extends JFrame implements
             throws IOException {
         super("CollabNet Subversion Server Discovery");
 
-        this.svnEdgeServersClient =
-                SvnEdgeBonjourClient.makeInstance(serviceType);
+        this.svnEdgeServersClient = SvnEdgeBonjourClient
+                .makeInstance(serviceType);
         this.svnEdgeServersClient.addServersListener(this);
 
         this.showGui = createGui;
@@ -91,22 +92,20 @@ public class CollabNetSvnBrowser extends JFrame implements
         JPanel headerPanel = new JPanel();
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setLayout(new BorderLayout());
-        JLabel imageLabel =
-                new JLabel(createImageIcon("/resources/logo_collabnet.gif",
-                        "CollabNet"), JLabel.LEFT);
+        JLabel imageLabel = new JLabel(ResourceLoader.Instance.getImageIcon(
+                "logo_collabnet.gif", "CollabNet"), JLabel.LEFT);
         imageLabel.setBorder(border);
         headerPanel.add("North", imageLabel);
         JTextArea descLabel = new JTextArea();
         descLabel.setBorder(border);
-        descLabel
-                .setText("This application shows all of the CollabNet "
-                         + "Subversion servers that are currently active on "
-                         + "your local LAN subnet. Servers are discovered "
-                         + "using the Bonjour protocol. Click on any of the "
-                         + "servers listed below to be taken to the web login "
-                         + "screen for that server." + "\n\n"
-                         + "NOTE: This list will dynamically adjust as new "
-                         + "servers are discovered or leave the network.");
+        descLabel.setText("This application shows all of the CollabNet "
+                + "Subversion servers that are currently active on "
+                + "your local LAN subnet. Servers are discovered "
+                + "using the Bonjour protocol. Click on any of the "
+                + "servers listed below to be taken to the web login "
+                + "screen for that server." + "\n\n"
+                + "NOTE: This list will dynamically adjust as new "
+                + "servers are discovered or leave the network.");
         descLabel.setEditable(false);
         descLabel.setLineWrap(true);
         descLabel.setWrapStyleWord(true);
@@ -166,7 +165,6 @@ public class CollabNetSvnBrowser extends JFrame implements
         System.out.println("Service ADD: " + name);
     }
 
-    @Override
     public void csvnServerStopped(SvnEdgeServerInfo serverInfo) {
         final String name = serverInfo.getServiceName();
         final ServiceDescriptor tempSd = ServiceDescriptor.makeNew(serverInfo);
@@ -180,19 +178,17 @@ public class CollabNetSvnBrowser extends JFrame implements
         }
     }
 
-    @Override
     public void csvnServerIsRunning(SvnEdgeServerInfo serverInfo) {
         String aName = serverInfo.getServiceName();
-        System.out.println("Service Resolve: " + aName + " -> " +
-                           serverInfo.getUrl());
+        System.out.println("Service Resolve: " + aName + " -> "
+                + serverInfo.getUrl());
         if (showGui) {
             ServiceDescriptor tempSd = ServiceDescriptor.makeNew(serverInfo);
             int index = services.indexOf(tempSd);
             boolean insertNew = index < 0;
             if (insertNew) {
-                final ServiceDescriptor sd =
-                        ServiceDescriptor.makeNew(getDefaultServiceIcon(),
-                                serverInfo, false);
+                final ServiceDescriptor sd = ServiceDescriptor.makeNew(
+                        getDefaultServiceIcon(), serverInfo);
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
                         insertSorted(services, sd);
@@ -235,30 +231,16 @@ public class CollabNetSvnBrowser extends JFrame implements
     public void valueChanged(ListSelectionEvent e) {
         if (e.getSource() == serviceList) {
             /*
-            String name = (String) serviceList.getSelectedValue();
-            if (name == null)
-            {
-                info.setText("");
-                return;
-            }
-            if (!e.getValueIsAdjusting())
-            {
-                System.out.println(this + " valueChanged() type:" + type + 
-                   " name:" + name);
-                System.out.flush();
-                ServiceInfo service = jmdns.getServiceInfo(type, name);
-                if (service == null)
-                {
-                    info.setText("service not found");
-                }
-                else
-                {
-                    jmdns.requestServiceInfo(type, name);
-                }
-            }
-            else {
-                ShowDetails(jmdns.getServiceInfo(type, name));
-            }*/
+             * String name = (String) serviceList.getSelectedValue(); if (name
+             * == null) { info.setText(""); return; } if
+             * (!e.getValueIsAdjusting()) { System.out.println(this +
+             * " valueChanged() type:" + type + " name:" + name);
+             * System.out.flush(); ServiceInfo service =
+             * jmdns.getServiceInfo(type, name); if (service == null) {
+             * info.setText("service not found"); } else {
+             * jmdns.requestServiceInfo(type, name); } } else {
+             * ShowDetails(jmdns.getServiceInfo(type, name)); }
+             */
         }
     }
 
@@ -278,9 +260,9 @@ public class CollabNetSvnBrowser extends JFrame implements
     }
 
     private ImageIcon getDefaultServiceIcon() {
-        return defaultServiceIcon == null ? (defaultServiceIcon =
-                createImageIcon("/resources/collabnet16.gif", "CollabNet"))
-            : defaultServiceIcon;
+        return defaultServiceIcon == null ? (defaultServiceIcon = ResourceLoader.Instance
+                .getCollabNetIcon())
+                : defaultServiceIcon;
     }
 
     /**

@@ -34,17 +34,11 @@ public class ServiceDescriptor implements Comparable<Object> {
     }
 
     public static ServiceDescriptor makeNew(SvnEdgeServerInfo serverInfo) {
-        return makeNew(null, serverInfo, false);
-    }
-
-    public static ServiceDescriptor makeNew(SvnEdgeServerInfo serverInfo,
-                                            boolean isTeamForge) {
-        return makeNew(null, serverInfo, isTeamForge);
+        return makeNew(null, serverInfo);
     }
 
     public static ServiceDescriptor makeNew(ImageIcon image,
-                                            SvnEdgeServerInfo serverInfo,
-                                            boolean isTeamForge) {
+            SvnEdgeServerInfo serverInfo) {
         ServiceDescriptor sd = new ServiceDescriptor();
         sd.img = image;
         sd.svnServerInfo = serverInfo;
@@ -66,8 +60,8 @@ public class ServiceDescriptor implements Comparable<Object> {
 
     public String getTeamForgeRegistrationUrl(String teamForgeUrl) {
         String url = toString();
-        if (supportsTeamForgeRegistration() && teamForgeUrl != null &&
-            teamForgeUrl.length() > 0) {
+        if (supportsTeamForgeRegistration() && teamForgeUrl != null
+                && teamForgeUrl.length() > 0) {
             try {
                 String ctfUrlQuery = "ctfURL=";
                 url += this.getTeamForgePath();
@@ -96,9 +90,8 @@ public class ServiceDescriptor implements Comparable<Object> {
             String hostAddress = this.svnServerInfo.getHostAddress();
             if (url.contains(hostAddress)) {
                 try {
-                    String cHostName =
-                            this.svnServerInfo.getInetAddress()
-                                    .getCanonicalHostName();
+                    String cHostName = this.svnServerInfo.getInetAddress()
+                            .getCanonicalHostName();
                     if (cHostName != null && cHostName.length() > 0) {
                         url = url.replaceFirst(hostAddress, cHostName);
                     }
@@ -132,17 +125,15 @@ public class ServiceDescriptor implements Comparable<Object> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result =
-                prime *
-                        result +
-                        ((svnServerInfo == null) ? 0 : svnServerInfo.hashCode());
+        result = prime * result
+                + ((svnServerInfo == null) ? 0 : svnServerInfo.hashCode());
         return result;
     }
 
     @Override
     public String toString() {
         String url = getNiceUrl();
-        return url == null ? "?" : this.svnServerInfo.getUrl().toString();
+        return url == null ? "?" : url;
     }
 
     public int compareTo(Object arg0) {
