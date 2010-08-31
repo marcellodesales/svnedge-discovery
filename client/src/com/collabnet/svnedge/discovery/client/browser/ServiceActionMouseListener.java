@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.collabnet.jmdns.browser;
+package com.collabnet.svnedge.discovery.client.browser;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -24,7 +24,6 @@ import java.io.IOException;
 import javax.swing.JList;
 import javax.swing.ListModel;
 
-import com.collabnet.jmdns.util.BrowserLauncher2;
 
 public class ServiceActionMouseListener extends MouseAdapter {
     @Override

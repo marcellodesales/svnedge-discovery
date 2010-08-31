@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.collabnet.jmdns.browser;
+package com.collabnet.svnedge.discovery.client.browser;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -40,7 +40,6 @@ import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import com.collabnet.jmdns.util.ResourceLoader;
 import com.collabnet.svnedge.discovery.SvnEdgeBonjourClient;
 import com.collabnet.svnedge.discovery.SvnEdgeServerInfo;
 import com.collabnet.svnedge.discovery.SvnEdgeServersListener;
