@@ -18,72 +18,59 @@
 package com.collabnet.jmdns.browser;
 
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
 import java.net.URLEncoder;
 
-import javax.jmdns.ServiceInfo;
 import javax.swing.ImageIcon;
+
+import com.collabnet.svnedge.discovery.SvnEdgeServerInfo;
+import com.collabnet.svnedge.discovery.mdns.SvnEdgeCsvnServiceKey;
 
 public class ServiceDescriptor implements Comparable<Object> {
 
-    private String serviceName;
-    private String serviceUrl;
     private ImageIcon img;
-    private String teamForgePath;
-    private InetAddress addr;
+    private SvnEdgeServerInfo svnServerInfo;
 
-    ServiceDescriptor(String serviceName, String url) {
-        this.serviceName = serviceName;
-        setServiceUrl(url);
+    private ServiceDescriptor() {
     }
 
-    ServiceDescriptor(ImageIcon image, ServiceInfo info, boolean isTeamForge) {
-        serviceName = info.getName();
-        img = image;
-        String svcUrl = info.getURL();
-        teamForgePath = null;
-        if (isTeamForge) {
-            String tfPath = info.getPropertyString("tfpath");
-            if (tfPath != null && tfPath.length() > 0) {
-                teamForgePath = tfPath;
-            }
-        }
-        setServiceUrl(svcUrl);
-        addr = info.getAddress();
+    public static ServiceDescriptor makeNew(SvnEdgeServerInfo serverInfo) {
+        return makeNew(null, serverInfo, false);
     }
 
-    ServiceDescriptor(ServiceInfo info, boolean isTeamForge) {
-        this(null, info, isTeamForge);
+    public static ServiceDescriptor makeNew(SvnEdgeServerInfo serverInfo,
+                                            boolean isTeamForge) {
+        return makeNew(null, serverInfo, isTeamForge);
     }
 
-    public String getServiceUrl() {
-        return serviceUrl;
-    }
-
-    public void setServiceUrl(String serviceUrl) {
-        this.serviceUrl = serviceUrl;
-    }
-
-    public String getServiceName() {
-        return serviceName;
+    public static ServiceDescriptor makeNew(ImageIcon image,
+                                            SvnEdgeServerInfo serverInfo,
+                                            boolean isTeamForge) {
+        ServiceDescriptor sd = new ServiceDescriptor();
+        sd.img = image;
+        sd.svnServerInfo = serverInfo;
+        return sd;
     }
 
     public ImageIcon getImage() {
+        return this.img;
+    }
 
-        return img;
+    private String getTeamForgePath() {
+        return this.svnServerInfo
+                .getPropertyValue(SvnEdgeCsvnServiceKey.TEAMFORGE_PATH);
     }
 
     public boolean supportsTeamForgeRegistration() {
-        return teamForgePath != null;
+        return this.getTeamForgePath() != null;
     }
 
     public String getTeamForgeRegistrationUrl(String teamForgeUrl) {
         String url = toString();
-        if (supportsTeamForgeRegistration() && teamForgeUrl != null
-                && teamForgeUrl.length() > 0) {
+        if (supportsTeamForgeRegistration() && teamForgeUrl != null &&
+            teamForgeUrl.length() > 0) {
             try {
                 String ctfUrlQuery = "ctfURL=";
-                url += teamForgePath;
+                url += this.getTeamForgePath();
                 if (!url.endsWith("?")) {
                     url += "?";
                 }
@@ -104,12 +91,14 @@ public class ServiceDescriptor implements Comparable<Object> {
      * @return String representation of Subversion Edge
      */
     public String getNiceUrl() {
-        String url = getServiceUrl();
-        if (addr != null && url != null) {
-            String hostAddress = addr.getHostAddress();
+        String url = this.svnServerInfo.getUrl().toString();
+        if (this.svnServerInfo.getUrl() != null && url != null) {
+            String hostAddress = this.svnServerInfo.getHostAddress();
             if (url.contains(hostAddress)) {
                 try {
-                    String cHostName = addr.getCanonicalHostName();
+                    String cHostName =
+                            this.svnServerInfo.getInetAddress()
+                                    .getCanonicalHostName();
                     if (cHostName != null && cHostName.length() > 0) {
                         url = url.replaceFirst(hostAddress, cHostName);
                     }
@@ -123,39 +112,46 @@ public class ServiceDescriptor implements Comparable<Object> {
     }
 
     @Override
-    public boolean equals(Object arg0) {
-        if (arg0 instanceof ServiceDescriptor) {
-            return getServiceName().equals(
-                    ((ServiceDescriptor) arg0).getServiceName());
-        } else if (arg0 instanceof ServiceInfo) {
-            return getServiceName().equals(((ServiceInfo) arg0).getName());
-        } else if (arg0 instanceof String) {
-            return getServiceName().equals((String) arg0);
-        }
-        return super.equals(arg0);
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ServiceDescriptor other = (ServiceDescriptor) obj;
+        if (svnServerInfo == null) {
+            if (other.svnServerInfo != null)
+                return false;
+        } else if (!svnServerInfo.equals(other.svnServerInfo))
+            return false;
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return getServiceName().hashCode();
+        final int prime = 31;
+        int result = 1;
+        result =
+                prime *
+                        result +
+                        ((svnServerInfo == null) ? 0 : svnServerInfo.hashCode());
+        return result;
     }
 
     @Override
     public String toString() {
         String url = getNiceUrl();
-        return url == null ? "?" : url;
+        return url == null ? "?" : this.svnServerInfo.getUrl().toString();
     }
 
     public int compareTo(Object arg0) {
         if (arg0 instanceof ServiceDescriptor) {
-            return getServiceName().compareToIgnoreCase(
-                    ((ServiceDescriptor) arg0).getServiceName());
-        } else if (arg0 instanceof ServiceInfo) {
-            return getServiceName().compareToIgnoreCase(
-                    ((ServiceInfo) arg0).getName());
-        } else if (arg0 instanceof String) {
-            return getServiceName().compareToIgnoreCase((String) arg0);
+            return this.svnServerInfo
+                    .compareTo(((ServiceDescriptor) arg0).svnServerInfo);
+        } else {
+            return 0;
         }
-        return 0;
     }
+
 }

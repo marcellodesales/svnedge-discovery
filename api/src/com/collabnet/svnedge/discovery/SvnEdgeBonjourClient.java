@@ -79,6 +79,17 @@ public class SvnEdgeBonjourClient implements ServiceListener {
     }
 
     /**
+     * Creates a new client to probe for the given type.
+     * @param type is the service type. See getServiceTypes().
+     * @return an instance of the SvnEdgeBonjourClient.
+     * @throws IOException if any problem trying to start the service occurs.
+     */
+    public static SvnEdgeBonjourClient makeInstance(SvnEdgeServiceType type) 
+        throws IOException {
+        return new SvnEdgeBonjourClient(null, null, type);
+    }
+    
+    /**
      * Creates a new client using the given ip address that will reply to the
      * given type.
      * @param ipAddress is the ip address to publish the service.

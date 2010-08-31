@@ -142,6 +142,13 @@ public final class SvnEdgeServerInfo implements Comparable<SvnEdgeServerInfo> {
     }
 
     /**
+     * @return the iNetAddress instance of the service.
+     */
+    public InetAddress getInetAddress() {
+        return this.ipAddress;
+    }
+
+    /**
      * @return the IP address of the service.
      */
     public String getHostAddress() {
