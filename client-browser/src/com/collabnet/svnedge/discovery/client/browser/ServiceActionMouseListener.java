@@ -24,6 +24,7 @@ import java.io.IOException;
 import javax.swing.JList;
 import javax.swing.ListModel;
 
+import com.collabnet.svnedge.discovery.client.browser.util.BrowserLauncher2;
 
 public class ServiceActionMouseListener extends MouseAdapter {
     @Override

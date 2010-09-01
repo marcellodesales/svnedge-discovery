@@ -43,6 +43,7 @@ import javax.swing.event.ListSelectionListener;
 import com.collabnet.svnedge.discovery.SvnEdgeBonjourClient;
 import com.collabnet.svnedge.discovery.SvnEdgeServerInfo;
 import com.collabnet.svnedge.discovery.SvnEdgeServersListener;
+import com.collabnet.svnedge.discovery.client.browser.util.ResourceLoader;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceType;
 
 public class CollabNetSvnBrowserApplet extends JApplet implements
