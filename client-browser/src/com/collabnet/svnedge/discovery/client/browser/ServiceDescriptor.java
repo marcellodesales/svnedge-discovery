@@ -23,11 +23,11 @@ import java.net.URLEncoder;
 import javax.swing.ImageIcon;
 
 import com.collabnet.svnedge.discovery.SvnEdgeServerInfo;
+import com.collabnet.svnedge.discovery.client.browser.util.ResourceLoader;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeCsvnServiceKey;
 
 public class ServiceDescriptor implements Comparable<Object> {
 
-    private ImageIcon img;
     private SvnEdgeServerInfo svnServerInfo;
 
     private ServiceDescriptor() {
@@ -40,22 +40,19 @@ public class ServiceDescriptor implements Comparable<Object> {
     public static ServiceDescriptor makeNew(ImageIcon image,
             SvnEdgeServerInfo serverInfo) {
         ServiceDescriptor sd = new ServiceDescriptor();
-        sd.img = image;
         sd.svnServerInfo = serverInfo;
         return sd;
     }
 
     public ImageIcon getImage() {
-        return this.img;
-    }
-
-    private String getTeamForgePath() {
-        return this.svnServerInfo
-                .getPropertyValue(SvnEdgeCsvnServiceKey.TEAMFORGE_PATH);
+        return this.managedByTeamForge() ? ResourceLoader.Instance
+                .getTeamForgeIcon() : ResourceLoader.Instance
+                .getCollabNetIcon();
     }
 
     public boolean supportsTeamForgeRegistration() {
-        return this.getTeamForgePath() != null;
+        String tfPath = this.getTeamForgePath();
+        return tfPath != null && tfPath.length() > 0;
     }
 
     public String getTeamForgeRegistrationUrl(String teamForgeUrl) {
@@ -80,9 +77,32 @@ public class ServiceDescriptor implements Comparable<Object> {
     }
 
     /**
+     * @return TeamForge registration path on SvnEdge
+     * 
+     *         TODO move up into Discovery API
+     */
+    private String getTeamForgePath() {
+        return this.svnServerInfo
+                .getPropertyValue(SvnEdgeCsvnServiceKey.TEAMFORGE_PATH);
+    }
+
+    /**
+     * @return <code>true</code> if SvnEdge is managed, <code>false</code>
+     *         otherwise
+     * 
+     *         TODO move up into Discovery API
+     */
+    public boolean managedByTeamForge() {
+        String tfPath = this.getTeamForgePath();
+        return tfPath != null && tfPath.length() == 0;
+    }
+
+    /**
      * Gets the Subversion Edge URL with canonical host name
      * 
      * @return String representation of Subversion Edge
+     * 
+     *         TODO Move up into Discovery API
      */
     public String getNiceUrl() {
         String url = this.svnServerInfo.getUrl().toString();
