@@ -148,12 +148,24 @@ public final class SvnEdgeBonjourRegister {
     }
 
     /**
-     * Unregister all the services CSVN and HTTP, closing the connection with
-     * the mDNS service.
+     * Closing the connection with the mDNS service.
+     * 
+     * @see javax.jmdns.JmDNS#close()
+     */
+    public void close() {
+    	if (jmdns != null) {
+    		jmdns.close();
+    		jmdns = null;
+    	}
+    }
+
+    /**
+     * Unregister all the services CSVN and HTTP
+     * 
+     * @see javax.jmdns.JmDNS#unregisterAllServices()
      */
     public void unregisterServices() {
-        jmdns.close();
-        jmdns = null;
+        jmdns.unregisterAllServices();
     }
 
     public static void main(String[] args) throws IOException {
