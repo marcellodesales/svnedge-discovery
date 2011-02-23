@@ -18,13 +18,13 @@
 package com.collabnet.svnedge.discovery;
 
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.jmdns.ServiceInfo;
 
+import com.collabnet.svnedge.discovery.mdns.SvnEdgeServerEvent;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceKey;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceType;
 
@@ -49,13 +49,21 @@ public final class SvnEdgeServerInfo implements Comparable<SvnEdgeServerInfo> {
      */
     private InetAddress ipAddress;
     /**
-     * The port where the web console is running.
+     * The domain name of the service.
      */
-    private int port;
+    private String domainName;
     /**
      * The published URL provided by the service.
      */
-    private URL url;
+    private String url;
+    /**
+     * The port number of the server.
+     */
+    private int port;
+    /**
+     * The event at which the instance of the information was originated.
+     */
+    private SvnEdgeServerEvent event;
     /**
      * The map with the keys and values retrieved from the mDNS packet.
      */
@@ -63,34 +71,48 @@ public final class SvnEdgeServerInfo implements Comparable<SvnEdgeServerInfo> {
             new HashMap<SvnEdgeServiceKey, String>();
 
     /**
+     * Creates a new instance of the class with the value of the creation.
+     */
+    private SvnEdgeServerInfo() {
+        
+    }
+
+    /**
      * Factory method that builds a new SvnEdge Service Info from a given
      * service info from mDNS.
      * 
      * @param serviceInfo
      *            is an instance of a service info captured from jmDNS.
+     * @param event is the event that originated the serviceInfo.
      * @return a new instance of the SvnEdge Service Info with the captured
      *         values from the service.
      */
-    public static SvnEdgeServerInfo makeNew(ServiceInfo serviceInfo) {
+    public static synchronized SvnEdgeServerInfo makeNew(ServiceInfo serviceInfo,
+                SvnEdgeServerEvent event) {
+
         SvnEdgeServerInfo newInst = new SvnEdgeServerInfo();
         newInst.serviceName = serviceInfo.getName();
-        newInst.ipAddress = serviceInfo.getInetAddress();
-        newInst.port = serviceInfo.getPort();
-        try {
-            newInst.url = new URL(serviceInfo.getURL());
-        } catch (MalformedURLException e) {
-            try {
-                newInst.url =
-                        new URL("http://" + newInst.getHostname() + ":" +
-                                newInst.port);
-            } catch (MalformedURLException e1) {
+        newInst.event = event;
+
+        if (event.equals(SvnEdgeServerEvent.SERVER_RUNNING)) {
+            newInst.port = serviceInfo.getPort();
+            // getInetAddresses forces the jmDNS proxy to find other server.
+            newInst.ipAddress = serviceInfo.getInetAddresses()[0];
+            String urlWithIp = serviceInfo.getURLs()[0].replace("http://", "")
+                .replace("https://", "");
+            newInst.domainName = serviceInfo.getServer().substring(0,
+                    serviceInfo.getServer().length() - 1);
+            // replaces the IP address with the domain name
+            int colonIndex = urlWithIp.indexOf(":");
+            String ipAddress = urlWithIp.substring(0, colonIndex);
+            newInst.url = serviceInfo.getURLs()[0].replace(ipAddress, 
+                    newInst.domainName);
+            SvnEdgeServiceType type = SvnEdgeServiceType.retrieveByType(
+                    serviceInfo.getType());
+            for (SvnEdgeServiceKey key : type.getRequiredKeys()) {
+                newInst.keyValues.put(key, serviceInfo.getPropertyString(
+                        key.toString()));
             }
-        }
-        SvnEdgeServiceType type =
-                SvnEdgeServiceType.retrieveByType(serviceInfo.getType());
-        for (SvnEdgeServiceKey key : type.getRequiredKeys()) {
-            newInst.keyValues.put(key,
-                    serviceInfo.getPropertyString(key.toString()));
         }
         return newInst;
     }
@@ -98,7 +120,7 @@ public final class SvnEdgeServerInfo implements Comparable<SvnEdgeServerInfo> {
     @Override
     public String toString() {
         StringBuilder propsBuilder = new StringBuilder();
-        propsBuilder.append(" Keys: ");
+        propsBuilder.append(" Properties: ");
         for (SvnEdgeServiceKey key : this.keyValues.keySet()) {
             propsBuilder.append("[" + key + "]=");
             propsBuilder.append(this.keyValues.get(key));
@@ -172,19 +194,32 @@ public final class SvnEdgeServerInfo implements Comparable<SvnEdgeServerInfo> {
     /**
      * @return is the URL of the SvnEdge web console.
      */
-    public URL getUrl() {
-        return url;
+    public String getUrl() {
+       return url;
+    }
+
+    /**
+     * @return The event at which this server information was captured. See
+     * {@link SvnEdgeServerEvent} values.
+     */
+    public SvnEdgeServerEvent getEvent() {
+        return this.event;
     }
 
     /**
      * @param key is the service key.
-     * @return the text representation for the given key. 
+     * @return the text representation for the given key.
      */
     public String getPropertyValue(SvnEdgeServiceKey key) {
         return this.keyValues.get(key);
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
     public int compareTo(SvnEdgeServerInfo other) {
-        return this.getUrl().toString().compareTo(other.getUrl().toString());
+        return this.serviceName.compareTo(other.serviceName);
     }
 }

@@ -33,6 +33,8 @@ import java.util.Set;
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 
+import org.apache.log4j.Logger;
+
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeCsvnServiceKey;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeHttpServiceKey;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceKey;
@@ -47,6 +49,7 @@ import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceType;
  */
 public final class SvnEdgeBonjourRegister {
 
+    private static final Logger log = Logger.getLogger(SvnEdgeBonjourRegister.class);
     /**
      * The name of the bonjour service published by SvnEdge servers.
      */
@@ -54,17 +57,21 @@ public final class SvnEdgeBonjourRegister {
     /**
      * the private instance of the jmDNS.
      */
-    private static JmDNS jmdns;
+    private JmDNS jmdns;
     /**
-     * Singleton instance of this class.
+     * The jmDNS service info acquired during the registration. This is needed
+     * to be used to handle the unregistration process.
      */
-    private static final SvnEdgeBonjourRegister instance =
-        new SvnEdgeBonjourRegister();
+    private ServiceInfo serverRegistrationInfo;
 
     /**
      * Singleton Constructor.
+     * @throws IOException 
      */
-    private SvnEdgeBonjourRegister() {
+    private SvnEdgeBonjourRegister(InetAddress ipAddress) throws IOException {
+        log.debug("Registering the SvnEdge server at " + 
+                ipAddress.getHostAddress());
+        this.jmdns = JmDNS.create(ipAddress);
     }
 
     /**
@@ -75,8 +82,7 @@ public final class SvnEdgeBonjourRegister {
      */
     public static SvnEdgeBonjourRegister getInstance(InetAddress ipAddress) 
             throws IOException {
-        jmdns = JmDNS.create(ipAddress);
-        return instance;
+        return new SvnEdgeBonjourRegister(ipAddress);
     }
 
     /**
@@ -98,29 +104,30 @@ public final class SvnEdgeBonjourRegister {
      * connectivity.
      */
     public void registerService(int port, SvnEdgeServiceType type, 
-                        Map<SvnEdgeServiceKey, String> params)
-        throws IllegalArgumentException, IOException {
+                Map<SvnEdgeServiceKey, String> params) throws 
+                        IllegalArgumentException, IOException {
 
         Map<String, String> serviceParams = getValidParams(type, params);
 
         final String serviceType = type.toString();
-        ServiceInfo csvnServiceType = null;
 
+        log.debug("Registering service type " + type);
         if (type.equals(SvnEdgeServiceType.CSVN)) {
             // register _csvn._tcp.local, with priority = weight = 0
-            csvnServiceType = ServiceInfo.create(serviceType, SERVICE_NAME,
+            serverRegistrationInfo = ServiceInfo.create(serviceType, SERVICE_NAME,
                     port, 0, 0, serviceParams);
 
         } else if (type.equals(SvnEdgeServiceType.HTTP)) {
             //register _http._tcp.local
             String serviceVal = SvnEdgeHttpServiceKey.PATH.toString() + "=" + 
                 serviceParams.get(SvnEdgeHttpServiceKey.PATH.toString());
-            csvnServiceType = ServiceInfo.create(serviceType, SERVICE_NAME, 
+            serverRegistrationInfo = ServiceInfo.create(serviceType, SERVICE_NAME, 
                     port, serviceVal);
         }
 
         //register _csvn._tcp.local
-        jmdns.registerService(csvnServiceType);
+        jmdns.registerService(serverRegistrationInfo);
+        log.debug("Registered the server: " + serverRegistrationInfo);
     }
 
     /**
@@ -149,14 +156,17 @@ public final class SvnEdgeBonjourRegister {
 
     /**
      * Closing the connection with the mDNS service.
+     * @throws IOException in case the close operation fails.
      * 
      * @see javax.jmdns.JmDNS#close()
      */
-    public void close() {
-    	if (jmdns != null) {
-    		jmdns.close();
-    		jmdns = null;
-    	}
+    public void close() throws IOException {
+        log.debug("Unregistering this server...");
+        if (jmdns != null) {
+            jmdns.unregisterService(serverRegistrationInfo);
+            jmdns.close();
+            jmdns = null;
+        }
     }
 
     /**
@@ -170,26 +180,28 @@ public final class SvnEdgeBonjourRegister {
 
     public static void main(String[] args) throws IOException {
         System.out.println("%%%%%%%%% SvnEdge Bonjour Register %%%%%%%%%%%%%%");
-        Enumeration<NetworkInterface> infs = NetworkInterface.getNetworkInterfaces();
-        Map<Integer, InetAddress> ipAddresses = new HashMap<Integer, InetAddress>();
+        Enumeration<NetworkInterface> infs = 
+            NetworkInterface.getNetworkInterfaces();
+        Map<Integer, InetAddress> ipAddresses = 
+            new HashMap<Integer, InetAddress>();
         int count = 0;
         while(infs.hasMoreElements()) {
-           	NetworkInterface inf = infs.nextElement();
-        	boolean isLoopback = false;
-        	List<InetAddress> validAddresses = new ArrayList<InetAddress>();
-        	Enumeration<InetAddress> availableIps = inf.getInetAddresses();
-        	while (availableIps.hasMoreElements()) {
-        		InetAddress ip = availableIps.nextElement();
-        		isLoopback |= ip.isLoopbackAddress();
-        		if (ip instanceof Inet4Address) {
-        			validAddresses.add(ip);
-        		}
-        	}
-        	if (!isLoopback && !validAddresses.isEmpty()) {
-        		for (InetAddress ip : validAddresses) {
-        			ipAddresses.put(++count, ip);
-        		}
-        	}
+            NetworkInterface inf = infs.nextElement();
+            boolean isLoopback = false;
+            List<InetAddress> validAddresses = new ArrayList<InetAddress>();
+            Enumeration<InetAddress> availableIps = inf.getInetAddresses();
+            while (availableIps.hasMoreElements()) {
+                InetAddress ip = availableIps.nextElement();
+                isLoopback |= ip.isLoopbackAddress();
+                if (ip instanceof Inet4Address) {
+                    validAddresses.add(ip);
+                }
+            }
+            if (!isLoopback && !validAddresses.isEmpty()) {
+                for (InetAddress ip : validAddresses) {
+                    ipAddresses.put(++count, ip);
+                }
+            }
         }
         InetAddress selectedIp = null;
         if (ipAddresses.size() > 0) {
@@ -211,13 +223,43 @@ public final class SvnEdgeBonjourRegister {
             }
         }
 
-        System.out.println("Registering the service at " + selectedIp.getHostAddress());
-        Map<SvnEdgeServiceKey, String> props = new HashMap<SvnEdgeServiceKey, String>();
+        int portNumber = -1;
+        while (portNumber == -1) {
+            System.out.print("Which port number? ");
+            InputStreamReader converter = new InputStreamReader(System.in);
+            BufferedReader input = new BufferedReader(converter);
+            String selected = input.readLine();
+            try {
+                portNumber = Integer.parseInt(selected);
+                if (portNumber < 1) {
+                    portNumber = -1;
+                    throw new Exception("The number must be greater than 0");
+                }
+
+            } catch (Exception nfe) {
+                System.out.print(nfe.getMessage());
+                continue;
+            }
+        }
+
+        System.out.println("Registering the service at " + 
+                selectedIp.getHostAddress() + ":" + portNumber);
+        Map<SvnEdgeServiceKey, String> props = 
+            new HashMap<SvnEdgeServiceKey, String>();
         props.put(SvnEdgeCsvnServiceKey.TEAMFORGE_PATH, "/integration");
         props.put(SvnEdgeCsvnServiceKey.CONTEXT_PATH, "/csvn");
 
-        SvnEdgeBonjourRegister r = SvnEdgeBonjourRegister.getInstance(selectedIp);
-        r.registerService(8080, SvnEdgeServiceType.CSVN, props);
+        SvnEdgeBonjourRegister r = SvnEdgeBonjourRegister.getInstance(
+                selectedIp);
+        r.registerService(portNumber, SvnEdgeServiceType.CSVN, props);
+
+        System.out.print("Stop? ");
+        InputStreamReader converter = new InputStreamReader(System.in);
+        BufferedReader input = new BufferedReader(converter);
+        String selected = input.readLine();
+        System.out.println("Stopping the service...");
+        r.close();
+        System.out.println("Service should be stopped...");
     }
     
 }

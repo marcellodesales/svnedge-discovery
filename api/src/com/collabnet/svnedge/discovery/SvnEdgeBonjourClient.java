@@ -29,13 +29,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceEvent;
 import javax.jmdns.ServiceInfo;
 import javax.jmdns.ServiceListener;
 
+import org.apache.log4j.Logger;
+
+import com.collabnet.svnedge.discovery.mdns.SvnEdgeServerEvent;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceType;
 
 /**
@@ -48,6 +53,7 @@ import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceType;
  */
 public class SvnEdgeBonjourClient implements ServiceListener {
 
+    private static final Logger log = Logger.getLogger(SvnEdgeBonjourClient.class);
     /**
      * The jMDNS client instance
      */
@@ -70,10 +76,16 @@ public class SvnEdgeBonjourClient implements ServiceListener {
         if (address != null) {
             if (hostname != null && !hostname.equals("")) {
                 jmdns = JmDNS.create(address, hostname);
+                log.debug("Initializing Discovery Client with address " + 
+                        address + "and hostname " + hostname);
+
             } else {
+                log.debug("Initializing Discovery Client with address " + 
+                        address);
                 jmdns = JmDNS.create(address);
             }
         } else {
+            log.debug("Initializing Discovery Client");
             jmdns = JmDNS.create();
         }
         jmdns.addServiceListener(type.toString(), this);
@@ -88,9 +100,10 @@ public class SvnEdgeBonjourClient implements ServiceListener {
      */
     public static SvnEdgeBonjourClient makeInstance(SvnEdgeServiceType type) 
         throws IOException {
+
         return new SvnEdgeBonjourClient(null, null, type);
     }
-    
+
     /**
      * Creates a new client using the given ip address that will reply to the
      * given type.
@@ -123,19 +136,21 @@ public class SvnEdgeBonjourClient implements ServiceListener {
 
     /**
      * The stop method forces the client to completely stop the jmDNS service.
+     * @throws IOException in case the close operation fails.
      */
-    public void stop() {
-        jmdns.unregisterAllServices();
-        jmdns.close();
-        jmdns = null;
+    public void stop() throws IOException {
+    	log.debug("Stopping the jmDSN client instance.");
+        if (jmdns != null) {
+            jmdns.close();
+            jmdns = null;
+        }
     }
 
     /**
      * Adds a new observer/listener to the service.
      * 
-     * @param newLis
-     *            is new observer interested in the events of any Subversion
-     *            Edge server in the local network.
+     * @param newLis is new observer interested in the events of any Subversion
+     * Edge server in the local network.
      */
     public synchronized void addServersListener(SvnEdgeServersListener newLis) {
         this.observers.add(newLis);
@@ -148,92 +163,152 @@ public class SvnEdgeBonjourClient implements ServiceListener {
         return SvnEdgeServiceType.values();
     }
 
-    private void debug(ServiceInfo info) {
-        System.out.println("================ INFO =========");
-        System.out.println("Nice: " + info.getNiceTextString());
-        System.out.println("Hostname: " + info.getHostAddress());
-        System.out.println("Name: " + info.getName());
-        System.out.println("Type: " + info.getType());
-        System.out.println("Qualified Name: " + info.getQualifiedName());
-        System.out.println("Port: " + info.getPort());
-        System.out.println("Priority: " + info.getPriority());
-        System.out.println("Server: " + info.getServer());
-        System.out.println("Text Strings: " + info.getTextString());
-        System.out.println("URL: " + info.getURL());
-        System.out.println("Weight: " + info.getWeight());
-        System.out.println("Inetaddress: " + info.getAddress());
-        System.out.println("Bytes: " + info.getTextBytes());
-
+    /**
+     * Shows the information about the given ServiceInfo instance in the
+     * debug level, after showing a given description.
+     * @param description is a description of where the given service info was
+     * originated from.
+     * @param info the jmDNS service Info.
+     */
+    private void debug(String description, ServiceInfo info) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("ServiceInfo: Nice:");
+        builder.append(info.getNiceTextString());
+        builder.append(", Inetaddress: [");
+        for (InetAddress inetAddr : info.getInetAddresses()) {
+            builder.append(inetAddr);
+            builder.append(" , ");
+        }
+        builder.replace(builder.length() - 3, builder.length(), "");
+        builder.append("], Host Addresses:[");
+        for (String hostAddr : info.getHostAddresses()) {
+            builder.append(hostAddr);
+            builder.append(" , ");
+        }
+        builder.replace(builder.length() - 3, builder.length(), "");
+        builder.append("], Port:");
+        builder.append(info.getPort());
+        builder.append(", Server:");
+        builder.append(info.getServer());
+        builder.append(", Urls:[");
+        for (String url : info.getURLs()) {
+            builder.append(url);
+            builder.append(" , ");
+        }
+        builder.replace(builder.length() - 3, builder.length(), "");
+        builder.append("], Qualified Name:");
+        builder.append(info.getQualifiedName());
+        builder.append(", Type:");
+        builder.append(info.getType());
+        builder.append(", Priority:");
+        builder.append(info.getPriority());
+        builder.append(", Weight:");
+        builder.append(info.getWeight());
+        builder.append(", Domain:");
+        builder.append(info.getDomain());
+        builder.append(", Protocol:");
+        builder.append(info.getProtocol());
+        builder.append(", Application:");
+        builder.append(info.getApplication());
+        builder.append(", Name:");
+        builder.append(info.getName());
+        builder.append(", Key:");
+        builder.append(info.getKey());
+        builder.append(", Type with Subtype:");
+        builder.append(info.getTypeWithSubtype());
+        builder.append(", Properties:[");
         Enumeration<String> props = info.getPropertyNames();
         while (props.hasMoreElements()) {
             String propName = props.nextElement();
             String propValue = info.getPropertyString(propName);
-            System.out.println(propName + ": " + propValue);
+            builder.append(propName);
+            builder.append(": ");
+            builder.append(propValue);
+            builder.append(" , ");
         }
+        builder.replace(builder.length() - 3, builder.length(), "");
+        builder.append("]");
+        log.debug(description);
+        log.debug(builder.toString());
     }
 
+    /* (non-Javadoc)
+     * @see javax.jmdns.ServiceListener#serviceAdded(javax.jmdns.ServiceEvent)
+     */
     public void serviceAdded(ServiceEvent addedEvent) {
-        // when any bonjour client is added to the jmDNS client. Do nothing.
-        this.notifyPacketArrival();
+        synchronized (this) {
+            // when any bonjour client is added to the jmDNS client. Do nothing.
+            debug("SvnEdge Server in cache running...", addedEvent.getInfo());
+            // update the client cache
+            final boolean persistent = false;
+            this.jmdns.getServiceInfo(addedEvent.getInfo().getTypeWithSubtype(),
+                    addedEvent.getInfo().getName(), persistent);
+        }
     }
 
+    /* (non-Javadoc)
+     * @see javax.jmdns.ServiceListener#serviceRemoved(javax.jmdns.ServiceEvent)
+     */
     public void serviceRemoved(ServiceEvent removedEvent) {
-        SvnEdgeServerInfo serverInfo = SvnEdgeServerInfo.makeNew(removedEvent
-                .getInfo());
-        for (SvnEdgeServersListener observer : this.observers) {
-            observer.csvnServerStopped(serverInfo);
+        synchronized (this) {
+            debug("SvnEdge Server stopped...", removedEvent.getInfo());
+            SvnEdgeServerInfo serverInfo = SvnEdgeServerInfo.makeNew(
+                    removedEvent.getInfo(), SvnEdgeServerEvent.SERVER_SHUTDOWN);
+               log.debug("Informing " + this.observers.size() + " observer(s)");
+               for (SvnEdgeServersListener observer : this.observers) {
+                   observer.csvnServerStopped(serverInfo);
+               }
         }
-        // debug(removedEvent.getInfo());
-        this.notifyPacketArrival();
     }
 
+    /* (non-Javadoc)
+     * @see javax.jmdns.ServiceListener#serviceResolved(javax.jmdns.ServiceEvent)
+     */
     public void serviceResolved(ServiceEvent resolvedEvent) {
-        SvnEdgeServerInfo serverInfo = SvnEdgeServerInfo.makeNew(resolvedEvent
-                .getInfo());
-        for (SvnEdgeServersListener observer : this.observers) {
-            observer.csvnServerIsRunning(serverInfo);
+        synchronized(this) {
+            debug("SvnEdge Server running...", resolvedEvent.getInfo());
+            SvnEdgeServerInfo serverInfo = SvnEdgeServerInfo.makeNew(
+                    resolvedEvent.getInfo(), SvnEdgeServerEvent.SERVER_RUNNING);
+
+            log.debug("Informing " + this.observers.size() + " observer(s)...");
+            for (SvnEdgeServersListener observer : this.observers) {
+                observer.csvnServerIsRunning(serverInfo);
+            }
         }
-        // debug(resolvedEvent.getInfo());
-        this.notifyPacketArrival();
-    }
-
-    private synchronized void waitForPacket() throws InterruptedException {
-        this.wait();
-    }
-
-    private synchronized void notifyPacketArrival() {
-        this.notifyAll();
     }
 
     public static void main(String[] args) throws IOException {
         System.out.println("%%%%%%%%% SvnEdge Bonjour Client %%%%%%%%%%%%%%");
-        Enumeration<NetworkInterface> infs = NetworkInterface.getNetworkInterfaces();
-        Map<Integer, InetAddress> ipAddresses = new HashMap<Integer, InetAddress>();
+
+        Enumeration<NetworkInterface> infs =
+                NetworkInterface.getNetworkInterfaces();
+        Map<Integer, InetAddress> ipAddresses =
+                new HashMap<Integer, InetAddress>();
         int count = 0;
-        while(infs.hasMoreElements()) {
-        	NetworkInterface inf = infs.nextElement();
-        	boolean isLoopback = false;
-        	List<InetAddress> validAddresses = new ArrayList<InetAddress>();
-        	Enumeration<InetAddress> availableIps = inf.getInetAddresses();
-        	while (availableIps.hasMoreElements()) {
-        		InetAddress ip = availableIps.nextElement();
-        		isLoopback |= ip.isLoopbackAddress();
-        		if (ip instanceof Inet4Address) {
-        			validAddresses.add(ip);
-        		}
-        	}
-        	if (!isLoopback && !validAddresses.isEmpty()) {
-        		for (InetAddress ip : validAddresses) {
-        			ipAddresses.put(++count, ip);
-        		}
-        	}
+        while (infs.hasMoreElements()) {
+            NetworkInterface inf = infs.nextElement();
+            boolean isLoopback = false;
+            List<InetAddress> validAddresses = new ArrayList<InetAddress>();
+            Enumeration<InetAddress> availableIps = inf.getInetAddresses();
+            while (availableIps.hasMoreElements()) {
+                InetAddress ip = availableIps.nextElement();
+                isLoopback |= ip.isLoopbackAddress();
+                if (ip instanceof Inet4Address) {
+                    validAddresses.add(ip);
+                }
+            }
+            if (!isLoopback && !validAddresses.isEmpty()) {
+                for (InetAddress ip : validAddresses) {
+                    ipAddresses.put(++count, ip);
+                }
+            }
         }
         InetAddress selectedIp = null;
         if (ipAddresses.size() > 0) {
             for (Integer index : ipAddresses.keySet()) {
                 if (ipAddresses.get(index) instanceof Inet4Address) {
-                    System.out.println("# " + (index) + ") " + 
-                        ipAddresses.get(index).getHostAddress());
+                    System.out.println("# " + (index) + ") " +
+                                       ipAddresses.get(index).getHostAddress());
                 }
             }
             System.out.println("# A) ALL ");
@@ -259,8 +334,8 @@ public class SvnEdgeBonjourClient implements ServiceListener {
 
         // getServiceTypes() is just a proxy to SvnEdgeServiceType.values()
         int totalServices = SvnEdgeBonjourClient.getServiceTypes().length;
-        Map<Integer, SvnEdgeServiceType> services = 
-            new HashMap<Integer, SvnEdgeServiceType>(totalServices);
+        Map<Integer, SvnEdgeServiceType> services =
+                new HashMap<Integer, SvnEdgeServiceType>(totalServices);
         for (SvnEdgeServiceType serviceType : SvnEdgeServiceType.values()) {
             services.put(++i, serviceType);
         }
@@ -269,10 +344,10 @@ public class SvnEdgeBonjourClient implements ServiceListener {
         SvnEdgeServiceType selectedType = null;
         do {
             for (Integer index : services.keySet()) {
-                System.out.println("%% [" + (index) + "]: "
-                        + services.get(index));
+                System.out.println("%% [" + (index) + "]: " +
+                                   services.get(index));
             }
-            System.out.print("Which service you wanna " + "observe? ");
+            System.out.print("Which service you wanna observe? ");
             InputStreamReader converter = new InputStreamReader(System.in);
             BufferedReader input = new BufferedReader(converter);
             selected = input.readLine();
@@ -283,34 +358,33 @@ public class SvnEdgeBonjourClient implements ServiceListener {
             try {
                 int indexSelected = Integer.parseInt(selected);
                 if (indexSelected > i || indexSelected < 1) {
-                    System.err.println("You need to make a selection "
-                            + "between 1 and " + i);
+                    System.err.println("You need to make a selection " +
+                                       "between 1 and " + i);
                 } else {
                     selectedType = services.get(indexSelected);
                 }
 
             } catch (NumberFormatException e) {
-                System.err.println("You can only enter numeric values "
-                        + "between 1 and " + i);
+                System.err.println("You can only enter numeric values " +
+                                   "between 1 and " + i);
             }
         } while (selectedType == null);
 
         // creating the client with the selected service type.
-        SvnEdgeBonjourClient client = SvnEdgeBonjourClient
-                .makeInstance(selectedIp, selectedType);
+        SvnEdgeBonjourClient client = SvnEdgeBonjourClient.makeInstance(
+                selectedIp, selectedType);
+
+        final BlockingQueue<SvnEdgeServerInfo> receivedEvents = 
+            new LinkedBlockingQueue<SvnEdgeServerInfo>();
 
         // adding an observer for the selected service type.
         client.addServersListener(new SvnEdgeServersListener() {
             public void csvnServerStopped(SvnEdgeServerInfo serverInfo) {
-                System.out.println("#### Server stopped ####");
-                System.out.println(serverInfo);
-                System.out.println();
+                receivedEvents.offer(serverInfo);
             }
 
             public void csvnServerIsRunning(SvnEdgeServerInfo serverInfo) {
-                System.out.println("#### Found Server running ####");
-                System.out.println(serverInfo);
-                System.out.println();
+                receivedEvents.offer(serverInfo);
             }
         });
 
@@ -320,9 +394,20 @@ public class SvnEdgeBonjourClient implements ServiceListener {
             System.out.println("###> Observing from IP addresses ");
             System.out.println("###> Waiting for packets...");
             try {
-                client.waitForPacket();
+                SvnEdgeServerInfo svnedgeServerInfo = receivedEvents.take();
+                switch(svnedgeServerInfo.getEvent()) {
+                case SERVER_RUNNING:
+                    System.out.println("#### Found Server running ####");
+                    System.out.println(svnedgeServerInfo);
+                    break;
+                case SERVER_SHUTDOWN:
+                    System.out.println("#### Server stopped ####");
+                    System.out.println(svnedgeServerInfo);
+                    break;
+                }
+
             } catch (InterruptedException packetWasReceived) {
-                // do nothing as a new packet was broadcasted
+                packetWasReceived.printStackTrace();
             }
         }
     }

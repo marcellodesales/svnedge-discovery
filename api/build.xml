@@ -10,7 +10,7 @@
     <path id="api.classpath">
       <pathelement location="target/classes"/>
         <fileset dir="lib">
-          <include name="jmdns.jar"/>
+          <include name="*.jar"/>
         </fileset>
     </path>
 
@@ -46,6 +46,7 @@
     <target name="update-distro" depends="jar">
         <copy file="dist/${JAR_NAME}" todir="${basedir}/../../console/lib/"/>
         <copy file="dist/${JAR_NAME}" todir="${basedir}/../client/lib/"/>
+        <copy file="dist/${JAR_NAME}" todir="${basedir}/../client-browser/lib/"/>
     </target>
 
     <target name="run" depends="jar">

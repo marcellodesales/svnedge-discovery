@@ -13,6 +13,7 @@
       <pathelement location="target/classes"/>
         <fileset id="imported.libs" dir="lib">
           <include name="jmdns.jar"/>
+          <include name="log4j-1.2.16.jar"/>
           <include name="svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar"/>
         </fileset>
     </path>
@@ -28,6 +29,7 @@
         <javac srcdir="src" destdir="target/classes" debug="on">
             <classpath><path refid="api.classpath" /></classpath>
         </javac>
+        <copy file="src/log4j.properties" todir="target/classes" />
     </target>
 
     <target name="jar" depends="compile">
@@ -42,7 +44,7 @@
                 <attribute name="Built-Date" value="${TODAY}"/>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Jdk" value="${java.runtime.version}"/>
-                <attribute name="Class-Path" value="lib/jmdns.jar lib/svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar"/>
+                <attribute name="Class-Path" value="lib/jmdns.jar lib/log4j-1.2.16.jar lib/svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar"/>
                 <attribute name="Main-Class" value="com.collabnet.svnedge.discovery.client.browser.CollabNetSvnBrowser"/>
             </manifest>
             <zipfileset dir="src/resources" prefix="resources">
@@ -77,6 +79,7 @@
               <j2se version="1.5+"/>
               <jar href="${JAR_NAME}" main="true"/>
               <jar href="lib/jmdns.jar"/>
+              <jar href="lib/log4j-1.2.16.jar"/>
               <jar href="lib/svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar"/>
             </resources>
             <application-desc main-class="com.collabnet.svnedge.discovery.client.browser.CollabNetSvnBrowser">
@@ -90,7 +93,7 @@
             <APPLET 
                 CODE="com.collabnet.svnedge.discovery.client.browser.CollabNetSvnBrowserApplet"
                 CODEBASE="${DISCOVERY_JNPL_CODEBASE}"
-                ARCHIVE="${JAR_NAME}, lib/jmdns.jar, lib/svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar" 
+                ARCHIVE="${JAR_NAME}, lib/jmdns.jar, lib/log4j-1.2.16.jar, lib/svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar" 
                 width="600" 
                 Height="300" />
         </echoxml>

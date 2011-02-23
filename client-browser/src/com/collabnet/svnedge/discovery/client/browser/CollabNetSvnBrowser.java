@@ -24,7 +24,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 
-import javax.jmdns.ServiceEvent;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -71,15 +70,14 @@ public class CollabNetSvnBrowser extends JFrame implements
             throws IOException {
         super("CollabNet Subversion Server Discovery");
 
-        this.svnEdgeServersClient = SvnEdgeBonjourClient
-                .makeInstance(serviceType);
-        this.svnEdgeServersClient.addServersListener(this);
-
         this.showGui = createGui;
         if (showGui) {
             createGUI();
             this.setVisible(true);
         }
+        this.svnEdgeServersClient = SvnEdgeBonjourClient.makeInstance(
+                serviceType);
+        this.svnEdgeServersClient.addServersListener(this);
     }
 
     private void createGUI() {
@@ -155,20 +153,8 @@ public class CollabNetSvnBrowser extends JFrame implements
         setSize(600, 400);
     }
 
-    /**
-     * Add a service.
-     * 
-     * @param event
-     */
-    public void serviceAdded(ServiceEvent event) {
-        final String name = event.getName();
-        System.out.println("Service ADD: " + name);
-    }
-
     public void csvnServerStopped(SvnEdgeServerInfo serverInfo) {
-        final String name = serverInfo.getServiceName();
         final ServiceDescriptor tempSd = ServiceDescriptor.makeNew(serverInfo);
-        System.out.println("Service REMOVE: " + name);
         if (showGui) {
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
@@ -179,9 +165,6 @@ public class CollabNetSvnBrowser extends JFrame implements
     }
 
     public void csvnServerIsRunning(SvnEdgeServerInfo serverInfo) {
-        String aName = serverInfo.getServiceName();
-        System.out.println("Service Resolve: " + aName + " -> "
-                + serverInfo.getUrl());
         if (showGui) {
             ServiceDescriptor tempSd = ServiceDescriptor.makeNew(serverInfo);
             int index = services.indexOf(tempSd);
