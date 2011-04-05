@@ -17,14 +17,10 @@
  */
 package com.collabnet.svnedge.discovery.client.browser;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
 import javax.swing.ImageIcon;
 
 import com.collabnet.svnedge.discovery.SvnEdgeServerInfo;
 import com.collabnet.svnedge.discovery.client.browser.util.ResourceLoader;
-import com.collabnet.svnedge.discovery.mdns.SvnEdgeCsvnServiceKey;
 
 public class ServiceDescriptor implements Comparable<Object> {
 
@@ -45,83 +41,9 @@ public class ServiceDescriptor implements Comparable<Object> {
     }
 
     public ImageIcon getImage() {
-        return this.managedByTeamForge() ? ResourceLoader.Instance
+        return this.svnServerInfo.isManagedByTeamForge() ? ResourceLoader.Instance
                 .getTeamForgeIcon() : ResourceLoader.Instance
                 .getCollabNetIcon();
-    }
-
-    public boolean supportsTeamForgeRegistration() {
-        String tfPath = this.getTeamForgePath();
-        return tfPath != null && tfPath.length() > 0;
-    }
-
-    public String getTeamForgeRegistrationUrl(String teamForgeUrl) {
-        String url = toString();
-        if (supportsTeamForgeRegistration() && teamForgeUrl != null
-                && teamForgeUrl.length() > 0) {
-            try {
-                String ctfUrlQuery = "ctfURL=";
-                url += this.getTeamForgePath();
-                if (!url.endsWith("?")) {
-                    url += "?";
-                }
-                if (!url.toLowerCase().endsWith(ctfUrlQuery.toLowerCase())) {
-                    url += ctfUrlQuery;
-                }
-                url += URLEncoder.encode(teamForgeUrl, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-        }
-        return url;
-    }
-
-    /**
-     * @return TeamForge registration path on SvnEdge
-     * 
-     *         TODO move up into Discovery API
-     */
-    private String getTeamForgePath() {
-        return this.svnServerInfo
-                .getPropertyValue(SvnEdgeCsvnServiceKey.TEAMFORGE_PATH);
-    }
-
-    /**
-     * @return <code>true</code> if SvnEdge is managed, <code>false</code>
-     *         otherwise
-     * 
-     *         TODO move up into Discovery API
-     */
-    public boolean managedByTeamForge() {
-        String tfPath = this.getTeamForgePath();
-        return tfPath != null && tfPath.length() == 0;
-    }
-
-    /**
-     * Gets the Subversion Edge URL with canonical host name
-     * 
-     * @return String representation of Subversion Edge
-     * 
-     *         TODO Move up into Discovery API
-     */
-    public String getNiceUrl() {
-        String url = this.svnServerInfo.getUrl().toString();
-        if (this.svnServerInfo.getUrl() != null && url != null) {
-            String hostAddress = this.svnServerInfo.getHostAddress();
-            if (url.contains(hostAddress)) {
-                try {
-                    String cHostName = this.svnServerInfo.getInetAddress()
-                            .getCanonicalHostName();
-                    if (cHostName != null && cHostName.length() > 0) {
-                        url = url.replaceFirst(hostAddress, cHostName);
-                    }
-                } catch (Exception exc) {
-                    // continue to use original URL (with IP address)
-                    System.err.println(exc);
-                }
-            }
-        }
-        return url;
     }
 
     @Override
@@ -152,8 +74,7 @@ public class ServiceDescriptor implements Comparable<Object> {
 
     @Override
     public String toString() {
-        String url = getNiceUrl();
-        return url == null ? "?" : url;
+        return svnServerInfo.getUrl();
     }
 
     public int compareTo(Object arg0) {
@@ -163,6 +84,25 @@ public class ServiceDescriptor implements Comparable<Object> {
         } else {
             return 0;
         }
+    }
+
+    /**
+     * @param teamForgeUrl
+     *            is the URL of the teamforge server hosting displaying the
+     *            services.
+     * @return the teamforge registration URL for the service descriptor.
+     */
+    public String getTeamForgeRegistrationUrl(String teamForgeUrl) {
+        return this.svnServerInfo.getTeamForgeRegistrationUrl(teamForgeUrl);
+    }
+
+    /**
+     * @return the teamforge registration URL for the service descriptor. If
+     * the svnedge server of the service is already managed, then the regular
+     * URL is returned.
+     */
+    public String getTeamForgeRegistrationUrl() {
+        return this.svnServerInfo.getTeamForgeRegistrationUrl();
     }
 
 }

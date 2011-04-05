@@ -39,7 +39,8 @@ public class ServiceActionMouseListener extends MouseAdapter {
                     ServiceDescriptor sd = (ServiceDescriptor) model
                             .getElementAt(index);
                     try {
-                        BrowserLauncher2.openURL2(sd.toString());
+                        BrowserLauncher2.openURL2(sd
+                                .getTeamForgeRegistrationUrl());
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();

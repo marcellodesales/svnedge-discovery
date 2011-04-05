@@ -75,8 +75,8 @@ public class CollabNetSvnBrowser extends JFrame implements
             createGUI();
             this.setVisible(true);
         }
-        this.svnEdgeServersClient = SvnEdgeBonjourClient.makeInstance(
-                serviceType);
+        this.svnEdgeServersClient = SvnEdgeBonjourClient
+                .makeInstance(serviceType);
         this.svnEdgeServersClient.addServersListener(this);
     }
 
@@ -212,19 +212,7 @@ public class CollabNetSvnBrowser extends JFrame implements
      * @param e
      */
     public void valueChanged(ListSelectionEvent e) {
-        if (e.getSource() == serviceList) {
-            /*
-             * String name = (String) serviceList.getSelectedValue(); if (name
-             * == null) { info.setText(""); return; } if
-             * (!e.getValueIsAdjusting()) { System.out.println(this +
-             * " valueChanged() type:" + type + " name:" + name);
-             * System.out.flush(); ServiceInfo service =
-             * jmdns.getServiceInfo(type, name); if (service == null) {
-             * info.setText("service not found"); } else {
-             * jmdns.requestServiceInfo(type, name); } } else {
-             * ShowDetails(jmdns.getServiceInfo(type, name)); }
-             */
-        }
+        // do nothing.
     }
 
     public String toString() {

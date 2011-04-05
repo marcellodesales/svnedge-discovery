@@ -113,9 +113,9 @@ public class CollabNetSvnBrowserApplet extends JApplet implements
                             ServiceDescriptor sd = (ServiceDescriptor) model
                                     .getElementAt(index);
                             try {
-                                URL url = new URL(isTeamForge ? sd
-                                        .getTeamForgeRegistrationUrl(hostUrl)
-                                        : sd.toString());
+                                URL url = new URL(isTeamForge ? 
+                                        sd.getTeamForgeRegistrationUrl(hostUrl)
+                                        : sd.getTeamForgeRegistrationUrl());
                                 getAppletContext().showDocument(url, "_blank");
                             } catch (IOException exc) {
                                 exc.printStackTrace(); // ignore
@@ -221,19 +221,7 @@ public class CollabNetSvnBrowserApplet extends JApplet implements
      * @param e
      */
     public void valueChanged(ListSelectionEvent e) {
-        if (e.getSource() == serviceList) {
-            /*
-             * String name = (String) serviceList.getSelectedValue(); if (name
-             * == null) { info.setText(""); return; } if
-             * (!e.getValueIsAdjusting()) { System.out.println(this +
-             * " valueChanged() type:" + type + " name:" + name);
-             * System.out.flush(); ServiceInfo service =
-             * jmdns.getServiceInfo(type, name); if (service == null) {
-             * info.setText("service not found"); } else {
-             * jmdns.requestServiceInfo(type, name); } } else {
-             * ShowDetails(jmdns.getServiceInfo(type, name)); }
-             */
-        }
+        // do nothing
     }
 
     public String toString() {
@@ -258,7 +246,6 @@ public class CollabNetSvnBrowserApplet extends JApplet implements
      * @return
      */
     private boolean isTeamForge(URL url) {
-
         String path = url.getPath();
         return path != null && path.startsWith("/sf/");
     }

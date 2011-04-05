@@ -17,13 +17,15 @@
  */
 package com.collabnet.svnedge.discovery;
 
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
-import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.jmdns.ServiceInfo;
 
+import com.collabnet.svnedge.discovery.mdns.SvnEdgeCsvnServiceKey;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeServerEvent;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceKey;
 import com.collabnet.svnedge.discovery.mdns.SvnEdgeServiceType;
@@ -98,15 +100,12 @@ public final class SvnEdgeServerInfo implements Comparable<SvnEdgeServerInfo> {
             newInst.port = serviceInfo.getPort();
             // getInetAddresses forces the jmDNS proxy to find other server.
             newInst.ipAddress = serviceInfo.getInetAddresses()[0];
-            String urlWithIp = serviceInfo.getURLs()[0].replace("http://", "")
-                .replace("https://", "");
-            newInst.domainName = serviceInfo.getServer().substring(0,
-                    serviceInfo.getServer().length() - 1);
+            newInst.domainName = serviceInfo.getInetAddresses()[0].
+                getCanonicalHostName();
             // replaces the IP address with the domain name
-            int colonIndex = urlWithIp.indexOf(":");
-            String ipAddress = urlWithIp.substring(0, colonIndex);
-            newInst.url = serviceInfo.getURLs()[0].replace(ipAddress, 
-                    newInst.domainName);
+            newInst.url = serviceInfo.getURLs()[0].replace(
+                    newInst.ipAddress.toString(), newInst.domainName);
+            newInst.url = newInst.url.replace(".local", "");
             SvnEdgeServiceType type = SvnEdgeServiceType.retrieveByType(
                     serviceInfo.getType());
             for (SvnEdgeServiceKey key : type.getRequiredKeys()) {
@@ -221,5 +220,58 @@ public final class SvnEdgeServerInfo implements Comparable<SvnEdgeServerInfo> {
      */
     public int compareTo(SvnEdgeServerInfo other) {
         return this.serviceName.compareTo(other.serviceName);
+    }
+
+    /**
+     * @return TeamForge registration path on SvnEdge
+     */
+    private String getTeamForgePath() {
+        return this.getPropertyValue(SvnEdgeCsvnServiceKey.TEAMFORGE_PATH);
+    }
+
+    /**
+     * @return <code>true</code> if SvnEdge is managed, <code>false</code>
+     * otherwise
+     */
+    public boolean isManagedByTeamForge() {
+        String tfPath = this.getTeamForgePath();
+        return tfPath != null && tfPath.length() == 0;
+    }
+
+    /**
+     * @param teamForgeUrl is the CTF server host URL displaying this instance.
+     * @return the TeamForge registration URL for this instance..
+     */
+    public String getTeamForgeRegistrationUrl(String teamForgeUrl) {
+        String url = this.url;
+        if (!this.isManagedByTeamForge() && teamForgeUrl != null
+                && teamForgeUrl.length() > 0) {
+            try {
+                String ctfUrlQuery = "ctfURL=";
+                url += this.getTeamForgePath();
+                if (!url.endsWith("?")) {
+                    url += "?";
+                }
+                if (!url.toLowerCase().endsWith(ctfUrlQuery.toLowerCase())) {
+                    url += ctfUrlQuery;
+                }
+                url += URLEncoder.encode(teamForgeUrl, "UTF-8");
+
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        return url;
+    }
+
+    /**
+     * @return The URL for administration wizard for registering the server on 
+     * a TeamForge server in case the server is not managed by any CTF server.
+     * If it is, then the regular URL is returned.
+     */
+    public String getTeamForgeRegistrationUrl() {
+        return !this.isManagedByTeamForge() ? 
+                this.url + this.getTeamForgePath() :
+                    this.url;
     }
 }

@@ -4,7 +4,7 @@
       <format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss z" />
    </tstamp>
 
-   <property name="version.num" value="1.0.0"/>
+   <property name="version.num" value="1.1"/>
    <property name="JAR_NAME" value="svnedge-discovery-api-${version.num}.jar" />
 
     <path id="api.classpath">
@@ -45,7 +45,6 @@
 
     <target name="update-distro" depends="jar">
         <copy file="dist/${JAR_NAME}" todir="${basedir}/../../console/lib/"/>
-        <copy file="dist/${JAR_NAME}" todir="${basedir}/../client/lib/"/>
         <copy file="dist/${JAR_NAME}" todir="${basedir}/../client-browser/lib/"/>
     </target>
 
@@ -54,6 +53,7 @@
             <classpath>
                 <path location="dist/${JAR_NAME}" />
                 <path location="lib/jmdns.jar" />
+                <path location="lib/log4j-1.2.16.jar" />
             </classpath>
         </java>
     </target>
