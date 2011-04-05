@@ -107,7 +107,7 @@
         </zip>
 
         <mkdir dir="dist/signed"/>
-        <signjar destDir="dist/signed" verbose="true" keystore="collabnet-svnedge.keystore" alias="svnedge" storepass="trustno1">
+        <signjar destDir="dist/signed" verbose="true" keystore="lib/collabnet-svnedge.keystore" alias="svnedge" storepass="trustno1">
           <path>
             <fileset dir="dist" includes="log4j-1.2.16.jar" />
             <fileset dir="dist" includes="svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar" />
