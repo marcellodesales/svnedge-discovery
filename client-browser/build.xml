@@ -40,12 +40,11 @@
             <manifest>
                 <attribute name="Manifest-Version" value="1.0"/>
                 <attribute name="Created-By" value="CollabNet, Inc."/>
-                <attribute name="Trusted-Library" value="true"/>
                 <attribute name="Implementation-Version" value="${version.num}"/>
                 <attribute name="Built-Date" value="${TODAY}"/>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Jdk" value="${java.runtime.version}"/>
-                <attribute name="Class-Path" value="jmdns.jar log4j-1.2.16.jar svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar"/>
+                <attribute name="Class-Path" value="lib/jmdns.jar lib/log4j-1.2.16.jar lib/svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar"/>
                 <attribute name="Main-Class" value="com.collabnet.svnedge.discovery.client.browser.CollabNetSvnBrowser"/>
             </manifest>
             <zipfileset dir="src/resources" prefix="resources">
@@ -56,7 +55,7 @@
     </target>
 
     <target name="dist" depends="jar">
-        <copy todir="dist/">
+        <copy todir="dist/lib">
            <fileset refid="imported.libs" />
         </copy>
         <echoxml file="dist/svnedge-discovery-client-browser.jnlp">
@@ -78,9 +77,9 @@
             <resources>
               <j2se version="1.5+"/>
               <jar href="${JAR_NAME}" main="true"/>
-              <jar href="jmdns.jar"/>
-              <jar href="log4j-1.2.16.jar"/>
-              <jar href="svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar"/>
+              <jar href="lib/jmdns.jar"/>
+              <jar href="lib/log4j-1.2.16.jar"/>
+              <jar href="lib/svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar"/>
             </resources>
             <application-desc main-class="com.collabnet.svnedge.discovery.client.browser.CollabNetSvnBrowser">
               <argument>-servicetype</argument>
@@ -93,7 +92,7 @@
             <APPLET 
                 CODE="com.collabnet.svnedge.discovery.client.browser.CollabNetSvnBrowserApplet"
                 CODEBASE="${DISCOVERY_JNPL_CODEBASE}"
-                ARCHIVE="${JAR_NAME}, jmdns.jar, log4j-1.2.16.jar, svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar" 
+                ARCHIVE="${JAR_NAME}, lib/jmdns.jar, lib/log4j-1.2.16.jar, lib/svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar" 
                 width="600" 
                 Height="300" />
         </echoxml>
@@ -109,10 +108,15 @@
         <mkdir dir="dist/signed"/>
         <signjar destDir="dist/signed" verbose="true" keystore="lib/collabnet-svnedge.keystore" alias="svnedge" storepass="trustno1">
           <path>
-            <fileset dir="dist" includes="log4j-1.2.16.jar" />
-            <fileset dir="dist" includes="svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar" />
             <fileset dir="dist" includes="svnedge-discovery-client-browser-${version.num}.jar" />
-            <fileset dir="dist" includes="jmdns.jar" />
+          </path>
+        </signjar>
+        <mkdir dir="dist/signed/lib"/>
+        <signjar destDir="dist/signed/lib" verbose="true" keystore="lib/collabnet-svnedge.keystore" alias="svnedge" storepass="trustno1">
+          <path>
+            <fileset dir="dist/lib" includes="log4j-1.2.16.jar" />
+            <fileset dir="dist/lib" includes="svnedge-discovery-api-${DISCOVERY_API_VERSION}.jar" />
+            <fileset dir="dist/lib" includes="jmdns.jar" />
           </path>
         </signjar>
     </target>
