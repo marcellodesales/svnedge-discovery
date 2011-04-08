@@ -99,12 +99,12 @@ public final class SvnEdgeServerInfo implements Comparable<SvnEdgeServerInfo> {
         if (event.equals(SvnEdgeServerEvent.SERVER_RUNNING)) {
             newInst.port = serviceInfo.getPort();
             // getInetAddresses forces the jmDNS proxy to find other server.
-            newInst.ipAddress = serviceInfo.getInetAddresses()[0];
-            newInst.domainName = serviceInfo.getInetAddresses()[0].
+            newInst.ipAddress = serviceInfo.getInet4Addresses()[0];
+            newInst.domainName = serviceInfo.getInet4Addresses()[0].
                 getCanonicalHostName();
             // replaces the IP address with the domain name
             newInst.url = serviceInfo.getURLs()[0].replace(
-                    newInst.ipAddress.toString(), newInst.domainName);
+                    newInst.ipAddress.getHostAddress(), newInst.domainName);
             newInst.url = newInst.url.replace(".local", "");
             SvnEdgeServiceType type = SvnEdgeServiceType.retrieveByType(
                     serviceInfo.getType());
